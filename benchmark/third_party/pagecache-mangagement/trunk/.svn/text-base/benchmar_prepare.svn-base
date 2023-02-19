@@ -1,0 +1,8 @@
+#!/bin/bash
+FROM=tmp/squashfs
+TO=/media/sdb7/images/pagemanagement_for_ubiquity_test.dir
+
+mkdir -p tmp/squashfs
+ln -s /media/cdrom0 tmp/mnt
+sudo mount /media/cdrom0
+sudo mount -t squashfs -o loop tmp/mnt/casper/filesystem.squashfs tmp/squashfs

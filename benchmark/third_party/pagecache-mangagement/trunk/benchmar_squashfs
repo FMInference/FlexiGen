@@ -1,0 +1,4 @@
+echo cp -r "$FROM" "$TO"
+#gprof cp -r "$FROM" "$TO"
+echo cp -r "$FROM" "$TO"
+cp -r $FROM $TO

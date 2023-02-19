@@ -1,0 +1,8 @@
+- Clean disk cache on memory
+sudo sysctl -w vm.drop_caches=3
+
+- Benchmark disk
+dd if=/dev/zero of=benchfile bs=4k count=2000000
+
+- Limit memory usage
+sudo systemd-run --scope --property=MemoryLimit=13G python3
