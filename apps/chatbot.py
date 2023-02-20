@@ -21,12 +21,12 @@ def main(args):
                     cpu_cache_compute=False, attn_sparsity=1.0,
                     compress_weight=args.compress_weight,
                     comp_weight_config=CompressionConfig(
-                    num_bits=4, group_size=64,
+                        num_bits=4, group_size=64,
                         group_dim=0, symmetric=False),
                     compress_cache=args.compress_cache,
                     comp_cache_config=CompressionConfig(
-                    num_bits=4, group_size=64,
-                    group_dim=2, symmetric=False))
+                        num_bits=4, group_size=64,
+                        group_dim=2, symmetric=False))
 
     # Model
     tokenizer = AutoTokenizer.from_pretrained("facebook/opt-30b", padding_side="left")
