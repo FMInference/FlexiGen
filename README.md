@@ -46,7 +46,7 @@ The figure below shows the latency and throughput trade-off of three offloading-
 FlexGen achieves a new Pareto-optimal frontier with a 100x higher maximum throughput for OPT-175B.
 Other systems cannot further increase throughput due to out-of-memory. ``(c)'' denotes FlexGen with compression.
 
-<img src="https://github.com/Ying1123/FlexGen-dev/blob/main/docs/throughput_vs_latency.jpg" alt="logo" width="500"></img>
+<img src="https://github.com/Ying1123/FlexGen/blob/main/docs/throughput_vs_latency.jpg" alt="logo" width="500"></img>
 
 
 ## How It Works
@@ -56,7 +56,7 @@ One key idea of FlexGen is to play the latency-throughput trade-off. Achieving l
 but the efficiency of offloading can be greatly boosted for throughput-oriented scenarios (see the figure above).
 FlexGen utilizes a block schedule to reuse weight and overlap I/O with computation, as shown in figure (b) below, while other baseline systems use an ineffiicent row-by-row schedule, as shown in figure (a) below.
 
-<img src="https://github.com/Ying1123/FlexGen-dev/raw/main/docs/block_schedule.jpg" alt="logo" width="500"></img>
+<img src="https://github.com/Ying1123/FlexGen/raw/main/docs/block_schedule.jpg" alt="logo" width="500"></img>
 
 More details can be found in [our paper](docs/paper.pdf).
 
