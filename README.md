@@ -10,7 +10,7 @@ The key features of FlexGen include:
 Up to 100x faster than other offloading-based systems for running 175B models on a single GPU.  
 
 📦 **Extreme Compression**.  
-Compress both the parameters and attention cache of OPT-175B models down to 4 bits with negelible accuracy loss.  
+Compress both the parameters and attention cache of models, such as OPT-175B, down to 4 bits with negligible accuracy loss.
 
 🚀 **Scalability**.  
 Come with a distributed pipeline parallelism runtime to allow scaling if more GPUs are given.
@@ -34,11 +34,11 @@ Come with a distributed pipeline parallelism runtime to allow scaling if more GP
 | FlexGen                  | 25.26 | 7.32 | 0.69 |
 | FlexGen with Compression | **29.12** | **8.38** | **1.12** |
 
-- Hardware: a NVIIDA T4 instance on GCP with 208GB DRAM and 1.5TB SSD.  
+- Hardware: an NVIIDA T4 (16GB) instance on GCP with 208GB of DRAM and 1.5TB of SSD.  
 - Workload: input sequence length = 512, output sequence length = 32. The batch size is tuned to a value that maximizes the generation throughput for each system.  
 - Metric: generation throughput (token/s) = number of the generated tokens / (time for processing prompts + time for generation).  
 
-How to [reproduce](benchmark/flexgen)
+How to [reproduce](benchmark/flexgen).
 
 ### Latency-throughput Trade-off
 The figure below shows the latency and throughput trade-off of three offloading-based systems on OPT-175B (left) and OPT-30B (right).
@@ -101,12 +101,12 @@ python3 -m flexgen.flex_opt --model facebook/opt-175b --percent 0 0 0 0 0 0 --of
 ### How to set the offloading strategy?
 We will release an automatic policy optimizer later, but now you have to manually try a few strategies.
 The idea of high-throughput generation is to offload parameters and attention cache as much as possible to CPU and disk if necessary.
-You can see the reference startegy in our benchmark [here](benchmark/flexgen).
+You can see the reference startegies in our benchmark [here](https://github.com/Ying1123/FlexGen/blob/956859634efb9133f39b4e3fac7bfb0ce5dfadbf/benchmark/flexgen/bench_suite.py#L39-L79).
 
 ## Scaling to Distributed GPUs
 If you have more GPUs, FlexGen can combine offloading with pipeline parallelism to allow scaling.
 For example, if you have 2 GPUs but the aggregated GPU memory is less than the model size, you still need offloading. FlexGen allow you to do pipeline parallelism with these 2 GPUs to accelerate the generation.
-See examples [here](benchmark/flexgen#distributed-gpus)
+See examples [here](benchmark/flexgen#distributed-gpus).
 
 ## Run ChatOPT on a Single GPU
 [chatbot.py](apps/chatbot.py) shows how to build a chatbot with FlexGen and OPT models.
