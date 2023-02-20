@@ -80,7 +80,7 @@ pip3 install -e .
 
 ### OPT-1.3B
 To get started, you can try a small model like OPT-1.3B first. It fits into a single GPU so no offloading is required.
-FlexGen will automatically download weights from huggingface.
+FlexGen will automatically download weights from HuggingFace.
 ```
 python3 -m flexgen.flex_opt --model facebook/opt-1.3b
 ```
