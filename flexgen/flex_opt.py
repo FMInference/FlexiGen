@@ -1253,8 +1253,13 @@ def run_flexgen(args):
 
 
 def add_parser_arguments(parser):
-    parser.add_argument("--model", type=str, default="facebook/opt-1.3b")
-    parser.add_argument("--path", type=str, default="~/opt_weights")
+    parser.add_argument("--model", type=str, default="facebook/opt-6.7b",
+        help="The model name.")
+    parser.add_argument("--path", type=str, default="~/opt_weights",
+        help="The path to the model weights. If there are no cached weights, "
+             "FlexGen will automatically download them from HuggingFace.")
+    parser.add_argument("--offload-dir", type=str, default="~/flexgen_offload_dir",
+        help="The directory to offload tensors. ")
     parser.add_argument("--prompt-len", type=int, default=512)
     parser.add_argument("--gen-len", type=int, default=32)
     parser.add_argument("--cut-gen-len", type=int,
@@ -1271,15 +1276,17 @@ def add_parser_arguments(parser):
 	     "the percentage of attention cache on CPU, "
 	     "the percentage of activations on GPU, "
 	     "the percentage of activations on CPU")
-    parser.add_argument("--offload-dir", type=str, default="~/flexgen_offload_dir")
     parser.add_argument("--sep-layer", type=str2bool, nargs='?',
         const=True, default=True)
     parser.add_argument("--pin-weight", type=str2bool, nargs="?",
         const=True, default=True)
     parser.add_argument("--cpu-cache-compute", action="store_true")
     parser.add_argument("--attn-sparsity", type=float, default=1.0)
-    parser.add_argument("--compress-cache", action="store_true")
-    parser.add_argument("--compress-weight", action="store_true")
+    parser.add_argument("--compress-weight", action="store_true",
+        help="Whether to compress weight.")
+    parser.add_argument("--compress-cache", action="store_true",
+        help="Whether to compress cache.")
+
 
     parser.add_argument("--log-file", type=str, default="auto")
     parser.add_argument("--no-log", action="store_true")
