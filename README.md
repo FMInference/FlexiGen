@@ -15,7 +15,7 @@ Compress both the parameters and attention cache of models, such as OPT-175B, do
 🚀 **Scalability**.  
 Come with a distributed pipeline parallelism runtime to allow scaling if more GPUs are given.
 
-| [**Read Paper**](docs/paper.pdf) | [**Join Discord**]() |
+| [**Read Paper**](docs/paper.pdf) | [**Join Discord**](https://discord.gg/JfphDTkBAh) |
 
 ## Content
 - [Benchmark Results](#benchmark-results)
