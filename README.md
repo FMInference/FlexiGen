@@ -1,6 +1,6 @@
 # FlexGen
 
-FlexGen is a high-throughput generation engine for running large langauge models with limited GPU memory.
+FlexGen is a high-throughput generation engine for running large language models with limited GPU memory.
 
 Large language models (LLMs) are at the heart of applications like ChatGPT and Copilot, but the high computational and memory requirements of LLM inference traditionally make it feasible only with multiple high-end accelerators. FlexGen aims to lower the resource requirement of LLM inference down to a single commodity GPU and allow flexible deployment for various hardware setups.
 
@@ -22,6 +22,7 @@ Come with a distributed pipeline parallelism runtime to allow scaling if more GP
 - [Install](#install)
 - [Get Started with a Single GPU](#get-started-with-a-single-gpu)
 - [Run ChatOPT on a Single GPU](#run-chatopt-on-a-single-gpu)
+- [Scaling to Distributed GPUs](#scaling-to-distributed-gpus)
 - [Roadmap](#roadmap)
 
 ## Benchmark Results
@@ -106,11 +107,11 @@ You can see the reference startegies in our benchmark [here](https://github.com/
 ## Scaling to Distributed GPUs
 If you have more GPUs, FlexGen can combine offloading with pipeline parallelism to allow scaling.
 For example, if you have 2 GPUs but the aggregated GPU memory is less than the model size, you still need offloading. FlexGen allow you to do pipeline parallelism with these 2 GPUs to accelerate the generation.
-See examples [here](benchmark/flexgen#distributed-gpus).
+See examples [here](https://github.com/Ying1123/FlexGen/tree/main/benchmark/flexgen#distributed-gpus).
 
 ## Run ChatOPT on a Single GPU
 [chatbot.py](apps/chatbot.py) shows how to build a chatbot with FlexGen and OPT models.
-While FlexGen is mainly optimized for throughput-oriented scenarios like dataset evaluations and information extraction, FlexGen can also be used for interactive applications like chatbot with better performance than other offloading-based systems.
+While FlexGen is mainly optimized for throughput-oriented scenarios like dataset evaluations and information extraction, FlexGen can also be used for interactive applications like chatbot with better performance than other offloading-based systems. Note that FlexGen cannot achieve its best throughput in this single-batch case.
 
 ### Commands
 ```
