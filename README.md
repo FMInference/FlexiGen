@@ -2,7 +2,8 @@
 
 FlexGen is a high-throughput generation engine for running large language models with limited GPU memory.
 
-Large language models (LLMs) are at the heart of applications like ChatGPT and Copilot, but the high computational and memory requirements of LLM inference traditionally make it feasible only with multiple high-end accelerators. FlexGen aims to lower the resource requirement of LLM inference down to a single commodity GPU and allow flexible deployment for various hardware setups.
+Large language models (LLMs) are at the heart of applications like ChatGPT and Copilot, but the high computational and memory requirements of LLM inference traditionally make it feasible only with multiple high-end accelerators.
+FlexGen aims to lower the resource requirements of LLM inference down to a single commodity GPU and allow flexible deployment for various hardware setups.
 
 The key features of FlexGen include:  
 
@@ -21,7 +22,7 @@ Come with a distributed pipeline parallelism runtime to allow scaling if more GP
 - [Benchmark Results](#benchmark-results)
 - [Install](#install)
 - [Get Started with a Single GPU](#get-started-with-a-single-gpu)
-- [Run ChatOPT on a Single GPU](#run-chatopt-on-a-single-gpu)
+- [Run Chatbot with OPT models up to 175B on a Single GPU](#run-chatbot-with-opt-models-up-to-175b-on-a-single-gpu)
 - [Scaling to Distributed GPUs](#scaling-to-distributed-gpus)
 - [Roadmap](#roadmap)
 
@@ -65,6 +66,7 @@ More details can be found in [our paper](docs/paper.pdf).
 Requirements:
 ```
 torch>=1.12
+transformers>=4.24
 ```
 
 Instructions:
@@ -109,9 +111,10 @@ If you have more GPUs, FlexGen can combine offloading with pipeline parallelism 
 For example, if you have 2 GPUs but the aggregated GPU memory is less than the model size, you still need offloading. FlexGen allow you to do pipeline parallelism with these 2 GPUs to accelerate the generation.
 See examples [here](https://github.com/Ying1123/FlexGen/tree/main/benchmark/flexgen#distributed-gpus).
 
-## Run ChatOPT on a Single GPU
+## Run Chatbot with OPT models up to 175B on a Single GPU
 [chatbot.py](apps/chatbot.py) shows how to build a chatbot with FlexGen and OPT models.
-While FlexGen is mainly optimized for throughput-oriented scenarios like dataset evaluations and information extraction, FlexGen can also be used for interactive applications like chatbot with better performance than other offloading-based systems. Note that FlexGen cannot achieve its best throughput in this single-batch case.
+While FlexGen is mainly optimized for large-batch throughput-oriented scenarios like dataset evaluations and information extraction,
+FlexGen can also be used for interactive applications like chatbot with better performance than other offloading-based systems. Note that FlexGen cannot achieve its best throughput in this single-batch case.
 
 ### Commands
 ```
@@ -143,3 +146,6 @@ We plan to work on the following features. Community conributions are welcome.
 - [ ] Support more models (BLOOM, CodeGen, OPT-IML)
 - [ ] Release the cost model and policy optimizer
 - [ ] Release a pip installable package
+
+## Acknowledgement
+This is a research project developed by [HazyResearch@Stanford](https://hazyresearch.stanford.edu/), [DS3Lab@ETH Zurich](https://ds3lab.inf.ethz.ch/), [CRFM@Stanford](https://crfm.stanford.edu/), [SkyComputing@UC Berkeley](https://sky.cs.berkeley.edu/) and [TogetherCompute](https://www.together.xyz/).
