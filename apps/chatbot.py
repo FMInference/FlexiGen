@@ -19,11 +19,11 @@ def main(args):
                     args.percent[4], args.percent[5],
                     overlap=True, sep_layer=True, pin_weight=True,
                     cpu_cache_compute=False, attn_sparsity=1.0,
-                    compress_weight=False,
+                    compress_weight=args.compress_weight,
                     comp_weight_config=CompressionConfig(
                     num_bits=4, group_size=64,
                         group_dim=0, symmetric=False),
-                    compress_cache=False,
+                    compress_cache=args.compress_cache,
                     comp_cache_config=CompressionConfig(
                     num_bits=4, group_size=64,
                     group_dim=2, symmetric=False))
@@ -72,17 +72,21 @@ def main(args):
         print(outputs[len(context):], end="")
         context = outputs
 
+    # TODO: optimize the performance by reducing redundant computation.
+
     model.delete_all_weights()
     disk.close_copy_threads()
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model", type=str, default="facebook/opt-6.7b")
-    parser.add_argument("--path", type=str, default="~/opt_weights")
-    parser.add_argument("--prompt-len", type=int, default=512)
-    parser.add_argument("--gen-len", type=int, default=32)
-    parser.add_argument("--offload-dir", type=str, default="~/flexgen_offload_dir")
+    parser.add_argument("--model", type=str, default="facebook/opt-6.7b",
+        help="The model name.")
+    parser.add_argument("--path", type=str, default="~/opt_weights",
+        help="The path to the model weights. If there are no cached weights, "
+             "FlexGen will automatically download them from HuggingFace.")
+    parser.add_argument("--offload-dir", type=str, default="~/flexgen_offload_dir",
+        help="The directory to offload tensors. ")
     parser.add_argument("--percent", nargs="+", type=int,
         default=[100, 0, 100, 0, 100, 0],
         help="Six numbers. They are the percentage of weight on GPU, "
@@ -91,6 +95,10 @@ if __name__ == "__main__":
          "the percentage of attention cache on CPU, "
          "the percentage of activations on GPU, "
          "the percentage of activations on CPU")
+    parser.add_argument("--compress-weight", action="store_true",
+        help="Whether to compress weight.")
+    parser.add_argument("--compress-cache", action="store_true",
+        help="Whether to compress cache.")
     args = parser.parse_args()
 
     assert len(args.percent) == 6
