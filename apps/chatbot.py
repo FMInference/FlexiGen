@@ -19,12 +19,12 @@ def main(args):
                     args.percent[4], args.percent[5],
                     overlap=True, sep_layer=True, pin_weight=True,
                     cpu_cache_compute=False, attn_sparsity=1.0,
-                    compress_weight=True,
+                    compress_weight=False,
                     comp_weight_config=CompressionConfig(
                     num_bits=4, group_size=64,
                         group_dim=0, symmetric=False),
-                            compress_cache=True,
-                            comp_cache_config=CompressionConfig(
+                    compress_cache=False,
+                    comp_cache_config=CompressionConfig(
                     num_bits=4, group_size=64,
                     group_dim=2, symmetric=False))
 
