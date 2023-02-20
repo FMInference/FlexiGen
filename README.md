@@ -64,7 +64,7 @@ More details can be found in [our paper](docs/paper.pdf).
 
 ## Install
 Requirements:  
-PyTorch >= 1.12   [Help](https://pytorch.org/get-started/locally/)
+ - PyTorch >= 1.12 [(Help)](https://pytorch.org/get-started/locally/)
 
 Instructions:
 ```
