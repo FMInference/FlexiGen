@@ -19,14 +19,15 @@ FlexGen aims to lower the resource requirements of large language model inferenc
 
 The key features of FlexGen include:  
 
+⚡ **High-Throughput Offloading**.  
+Higher-throughput generation than other offloading-based systems (e.g., HF accelerate, DeepSpeed Zero-Inference).
+
 📦 **Extreme Compression**.  
 Compress both the parameters and attention cache of models, such as OPT-175B, down to 4 bits with negligible accuracy loss.
 
 🚀 **Scalability**.  
 Come with a distributed pipeline parallelism runtime to allow scaling if more GPUs are given.
 
-⚡ **High-Throughput Offloading**.  
-Higher-throughput offloading than HF accelerate, DeepSpeed Zero-Inference for OPT-175B. 
 
 | [**Read Paper**](docs/paper.pdf) | [**Join Discord**](https://discord.gg/JfphDTkBAh) |
 
@@ -49,15 +50,14 @@ Higher-throughput offloading than HF accelerate, DeepSpeed Zero-Inference for OP
 | FlexGen with Compression | **29.12** | **8.38** | **1.12** |
 
 - Hardware: an NVIDIA T4 (16GB) instance on GCP with 208GB of DRAM and 1.5TB of SSD.  
-- Workload: input sequence length = 512, output sequence length = 32. Batch sizes 24, 72, and 20 for 6.7B, 30B, 175B models.  
+- Workload: input sequence length = 512, output sequence length = 32. The batch size is tuned to a large value that maximizes the generation throughput for each system. (e.g., 256 for OPT-175B on FlexGen).
 - Metric: generation throughput (token/s) = number of the generated tokens / (time for processing prompts + time for generation).  
 
 How to [reproduce](benchmark/flexgen).
 
 ### Latency-throughput Trade-off
 The figure below shows the latency and throughput trade-off of three offloading-based systems on OPT-175B (left) and OPT-30B (right).
-FlexGen achieves higher maximum throughput for OPT-175B.
-"FlexGen(c)" is FlexGen with compression.
+FlexGen achieves higher maximum throughput for both models. "FlexGen(c)" is FlexGen with compression.
 
 <img src="https://github.com/FMInference/FlexGen/blob/main/docs/throughput_vs_latency.jpg" alt="logo" width="500"></img>
 
