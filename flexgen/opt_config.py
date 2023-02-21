@@ -48,58 +48,60 @@ def get_opt_config(name, **kwargs):
 
     # Handle opt-iml-30b and opt-iml-max-30b
     if "-iml-max" in name:
-        name = name.replace("-iml-max", "")
-    if "-iml" in name:
-        name = name.replace("-iml", "")
+        arch_name = name.replace("-iml-max", "")
+    elif "-iml" in name:
+        arch_name = name.replace("-iml", "")
+    else:
+        arch_name = name
 
-    if name == "opt-125m":
+    if arch_name == "opt-125m":
         config = OptConfig(name=name,
             max_seq_len=2048, num_hidden_layers=12, n_head=12,
             hidden_size=768, input_dim=768, ffn_embed_dim=768 * 4,
         )
-    elif name == "opt-350m":
+    elif arch_name == "opt-350m":
         config = OptConfig(name=name,
             max_seq_len=2048, num_hidden_layers=24, n_head=16,
             hidden_size=1024, input_dim=1024, ffn_embed_dim=1024 * 4,
         )
         raise NotImplementedError("Not implemented because this model "
                                   "has a different architecture")
-    elif name == "opt-1.3b":
+    elif arch_name == "opt-1.3b":
         config = OptConfig(name=name,
             max_seq_len=2048, num_hidden_layers=24, n_head=32,
             hidden_size=2048, input_dim=2048, ffn_embed_dim=2048 * 4,
         )
-    elif name == "opt-2.7b":
+    elif arch_name == "opt-2.7b":
         config = OptConfig(name=name,
             max_seq_len=2048, num_hidden_layers=32, n_head=32,
             hidden_size=2560, input_dim=2560, ffn_embed_dim=2560 * 4,
         )
-    elif name == "opt-6.7b":
+    elif arch_name == "opt-6.7b":
         config = OptConfig(name=name,
             max_seq_len=2048, num_hidden_layers=32, n_head=32,
             hidden_size=4096, input_dim=4096, ffn_embed_dim=4096 * 4,
         )
-    elif name == "opt-13b":
+    elif arch_name == "opt-13b":
         config = OptConfig(name=name,
             max_seq_len=2048, num_hidden_layers=40, n_head=40,
             hidden_size=5120, input_dim=5120, ffn_embed_dim=5120 * 4,
         )
-    elif name == "opt-30b":
+    elif arch_name == "opt-30b":
         config = OptConfig(name=name,
             max_seq_len=2048, num_hidden_layers=48, n_head=56,
             hidden_size=7168, input_dim=7168, ffn_embed_dim=7168 * 4,
         )
-    elif name == "opt-66b":
+    elif arch_name == "opt-66b":
         config = OptConfig(name=name,
             max_seq_len=2048, num_hidden_layers=64, n_head=72,
             hidden_size=9216, input_dim=9216, ffn_embed_dim=9216 * 4,
         )
-    elif name == "opt-175b":
+    elif arch_name == "opt-175b":
         config = OptConfig(name=name,
             max_seq_len=2048, num_hidden_layers=96, n_head=96,
             hidden_size=12288, input_dim=12288, ffn_embed_dim=12288 * 4,
         )
-    elif name == "opt-175b-stage":
+    elif arch_name == "opt-175b-stage":
         config = OptConfig(name=name,
             max_seq_len=2048, num_hidden_layers=24, n_head=96,
             hidden_size=12288, input_dim=12288, ffn_embed_dim=12288 * 4,
