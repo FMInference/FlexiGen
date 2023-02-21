@@ -8,6 +8,7 @@ This is a research project developed by
 [HazyResearch@Stanford](https://hazyresearch.stanford.edu/),
 [SkyComputing@UC Berkeley](https://sky.cs.berkeley.edu/),
 [DS3Lab@ETH Zurich](https://ds3lab.inf.ethz.ch/),
+[FAIR@Meta](https://ai.facebook.com/),
 [CRFM@Stanford](https://crfm.stanford.edu/),
 and [TogetherCompute](https://www.together.xyz/).
 
