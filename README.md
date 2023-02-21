@@ -160,7 +160,7 @@ They save more memory but run slower.
 - Offload weights to disk by using `--percent 0 0 100 0 100 0`.
 
 ## Roadmap
-We plan to work on the following features. Community conributions are welcome.
+We plan to work on the following features. Community contributions are welcome.
 
 - [ ] Support Apple silicon M1/M2 deployment
 - [ ] Support Colab deployement
