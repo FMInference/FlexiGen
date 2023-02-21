@@ -1,7 +1,7 @@
 # Benchmark Baselines
 
 ## Install
-Install the forks of Huggingface/transformers and Microsoft/DeepSpeed following this [guide](../third_party/README.md)
+Install the forks of Huggingface/transformers and Microsoft/DeepSpeed following this [guide](../third_party/README.md).
 
 ```
 pip3 install accelerate==0.15.0
