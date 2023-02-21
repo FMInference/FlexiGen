@@ -1,13 +1,12 @@
 # FlexGen
 
+FlexGen is a high-throughput generation engine for running large language models with limited GPU memory (e.g., a 16GB T4 or a 24GB RTX3090 gaming card!).
 This is a research project developed by
 [HazyResearch@Stanford](https://hazyresearch.stanford.edu/),
 [SkyComputing@UC Berkeley](https://sky.cs.berkeley.edu/),
 [DS3Lab@ETH Zurich](https://ds3lab.inf.ethz.ch/),
 [CRFM@Stanford](https://crfm.stanford.edu/),
 and [TogetherCompute](https://www.together.xyz/).
-
-FlexGen is a high-throughput generation engine for running large language models with limited GPU memory (e.g., a 16GB T4 or a 24GB RTX3090 gaming card!).
 
 Large language models (LLMs) are at the heart of applications like ChatGPT and Copilot, but the high computational and memory requirements of LLM inference traditionally make it feasible only with multiple high-end accelerators.
 FlexGen aims to lower the resource requirements of LLM inference down to a single commodity GPU (e.g., T4, 3090) and allow flexible deployment for various hardware setups.
