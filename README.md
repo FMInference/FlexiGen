@@ -104,9 +104,9 @@ python3 -m flexgen.flex_opt --model facebook/opt-175b --percent 0 0 0 0 0 0 --of
 
 ### How to set the offloading strategy and `--percent`?
 We will release an automatic policy optimizer later, but now you have to manually try a few strategies.
-The idea of high-throughput generation is to offload parameters and attention cache as much as possible to CPU and disk if necessary.
+The idea of high-throughput generation is to offload parameters and attention cache as much as possible to the CPU and disk if necessary.
 You can see the reference startegies in our benchmark [here](https://github.com/Ying1123/FlexGen/blob/956859634efb9133f39b4e3fac7bfb0ce5dfadbf/benchmark/flexgen/bench_suite.py#L39-L79).
-To avoid out-of-memory, you can tune the `--percent` of offload more tensors to CPU and Disk.
+To avoid out-of-memory, you can tune the `--percent` of offload more tensors to the CPU and disk.
 
 ## Scaling to Distributed GPUs
 If you have more GPUs, FlexGen can combine offloading with pipeline parallelism to allow scaling.
