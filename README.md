@@ -15,19 +15,18 @@ and [TogetherCompute](https://www.together.xyz/).
 
 ----------
 
-Large language models (LLMs) are at the heart of applications like ChatGPT and Copilot, but the high computational and memory requirements of LLM inference traditionally make it feasible only with multiple high-end accelerators.
-FlexGen aims to lower the resource requirements of LLM inference down to a single commodity GPU (e.g., T4, 3090) and allow flexible deployment for various hardware setups.
+FlexGen aims to lower the resource requirements of large language model inference in the high-throughput setting down to a single commodity GPU (e.g., T4, 3090) and allow flexible deployment for various hardware setups.
 
 The key features of FlexGen include:  
-
-⚡ **Lightining Fast Offloading**.  
-Up to 100x faster than other offloading-based systems for running 175B models on a single GPU.  
 
 📦 **Extreme Compression**.  
 Compress both the parameters and attention cache of models, such as OPT-175B, down to 4 bits with negligible accuracy loss.
 
 🚀 **Scalability**.  
 Come with a distributed pipeline parallelism runtime to allow scaling if more GPUs are given.
+
+⚡ **High-Throughput Offloading**.  
+Higher-throughput offloading than HF accelerate, DeepSpeed Zero-Inference for OPT-175B. 
 
 | [**Read Paper**](docs/paper.pdf) | [**Join Discord**](https://discord.gg/JfphDTkBAh) |
 
@@ -50,15 +49,15 @@ Come with a distributed pipeline parallelism runtime to allow scaling if more GP
 | FlexGen with Compression | **29.12** | **8.38** | **1.12** |
 
 - Hardware: an NVIDIA T4 (16GB) instance on GCP with 208GB of DRAM and 1.5TB of SSD.  
-- Workload: input sequence length = 512, output sequence length = 32. The batch size is tuned to a value that maximizes the generation throughput for each system.  
+- Workload: input sequence length = 512, output sequence length = 32. Batch sizes 24, 72, and 20 for 6.7B, 30B, 175B models.  
 - Metric: generation throughput (token/s) = number of the generated tokens / (time for processing prompts + time for generation).  
 
 How to [reproduce](benchmark/flexgen).
 
 ### Latency-throughput Trade-off
 The figure below shows the latency and throughput trade-off of three offloading-based systems on OPT-175B (left) and OPT-30B (right).
-FlexGen achieves a new Pareto-optimal frontier with a 100x higher maximum throughput for OPT-175B.
-Other systems cannot further increase throughput due to out-of-memory. "FlexGen(c)" is FlexGen with compression.
+FlexGen achieves higher maximum throughput for OPT-175B.
+"FlexGen(c)" is FlexGen with compression.
 
 <img src="https://github.com/FMInference/FlexGen/blob/main/docs/throughput_vs_latency.jpg" alt="logo" width="500"></img>
 
