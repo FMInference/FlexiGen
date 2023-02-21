@@ -1,0 +1,28 @@
+# Mac system files
+.DS_store
+
+# built binaries
+third_party/pagecache-mangagement/trunk/fadv
+third_party/pagecache-mangagement/trunk/*.so
+third_party/pagecache-mangagement/trunk/sfr
+third_party/pagecache-mangagement/trunk/Makefile
+
+# vscode & VIM & JetBrain
+.vscode/
+.idea
+*.swp
+
+# cache
+*__pycache__
+*.egg-info
+
+# pickle
+*.pkl
+
+# log files
+*.tsv
+*.log
+*.raw
+
+# tmp scripts
+today_job.sh

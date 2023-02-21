@@ -1,0 +1,69 @@
+---
+# Only the main Sass file needs front matter (the dashes are enough)
+---
+
+@charset "utf-8";
+
+@import "minimal-mistakes/skins/{{ site.minimal_mistakes_skin | default: 'default' }}"; // skin
+@import "minimal-mistakes"; // main partials
+@import "button-group"; // main partials
+
+//
+// DeepSpeed customizations
+//
+
+
+.site-title {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-item-align: center;
+  align-self: center;
+  font-weight: bold;
+  font-size: $type-size-2; // DeepSpeed: increase size
+}
+
+
+.toc {
+  font-family: $sans-serif-narrow;
+  color: $gray;
+  background-color: $background-color;
+  border: 1px solid $border-color;
+  border-radius: $border-radius;
+  -webkit-box-shadow: $box-shadow;
+  box-shadow: $box-shadow;
+	//position: fixed;
+  .nav__title {
+    color: #fff;
+    font-size: $type-size-6;
+    background: $primary-color;
+    border-top-left-radius: $border-radius;
+    border-top-right-radius: $border-radius;
+  }
+
+  // Scrollspy marks toc items as .active when they are in focus
+  .active a {
+    @include yiq-contrasted($active-color);
+  }
+}
+
+ul.tag-box li {
+  display: inline-block;
+  list-style: none;
+  list-style-image: none;
+  margin-bottom: 10px;
+  text-transform: capitalize;
+}
+ul.tag-box li a {
+  background: #e6e6e6;
+  padding: 2px 8px;
+  border-radius: 3px;
+  color:  #0092ca;
+  text-transform: capitalize;
+  font-weight: bold;
+}
+ul.tag-box li span.size {
+  font-weight: bold;
+}
+
+.site-logo img { max-height: 200%; width: auto; }

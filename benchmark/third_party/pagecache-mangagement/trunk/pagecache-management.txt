@@ -1,0 +1,89 @@
+
+Userspace pagecache management using LD_PRELOAD and posix_fadvise()
+Andrew Morton <akpm@linux-foundation.org>
+March 2007
+
+
+This is a tool which attempts to address the problem wherein an application
+undesirably consumes large amounts of kernel pagecache: backup programs, DVD
+copies, large rsyncs, updatedb, etc.
+
+The idea is that we use a bit of LD_PRELOAD code which wraps glibc's read(),
+pread(), write(), pwrite(), close() and dup2() functions.  As your
+pagecache-consuming application proceeds, this code will use posix_fadvise()
+to shoot down the pagecache which it is instantiating.
+
+Usage:
+
+	make
+	cp pagecache-management.sh pagecache-management.so /usr/local/bin
+	rehash
+
+	cd /usr/src
+	pagecache-management.sh cp linux-2.6.20 foo
+
+If you don't want to limit the read pagecache, you can use
+	pagecache-management-ignore-reads.sh
+instead. To reduce the overhead you may wish to use lazy file closing, (e.g.
+	pagecache-management-lazy200ir.sh).
+This allows the pagecache-managment to keep closed files open to improve performace. This breaks normal POSIX semantics, however this usually doesn't matter except for stdin, stdout and stderr (and we always close those files promptly). At this time we do not know of any real world program that lazy closing breaks.
+
+To give you some idea of the performance overhead, doing a "cp -r" from the squashfs on an Ubuntu LiveCD takes:
+18min 05s without pagecache-management
+18min 30s with    pagecache-management-lazy200ir
+18min 45s with    pagecache-management-ignore-reads
+
+
+This code has much room for improvement.  There could be many enhancements, including
+
+- LRU the files: string them on a list, put most-recently-used at the front,
+  walk the list from the tail when shooting down pagecache.
+
+- Add an option to only perform invalidation of files which are read.
+
+- Add an option to only perform invalidation of files which are owned by the
+  user, or which aren't owned by root.  Because we probably don't want to be
+  knocking /etc, /bin and /usr files out of cache.
+
+- Teach the code to intercept open(), openat() and creat(), and start
+  tracking filenames.  Add suitable options to permit the user to control
+  which files are and are not to be invalidated, based upon filename patterns.
+
+- Make the code smarter about avoiding IO.  It tries to avoid nuking your
+  readahead cache now, and seems to succeed, but it is very simplistic.
+
+- Make the code smarter about writeback.
+
+  posix_fadvise(FADV_DONTNEED) will already sync dirty data to disk.  But it
+  does this asynchronously.  So that when fadvise() tries to invalidate a file
+  which has not yet been written back, it will largely fail to do so because
+  the pages are still under writeback when fadvise() performs its pagecache
+  invalidation.
+
+  This code fixes that by running sync_file_range() on close() to clean all
+  the pagecache before running posix_fadvise(FADV_DONTNEED).
+
+  But we could be a lot smarter: keep the fds open for longer, try to avoid
+  forcing writeback unless and until we really need to.
+
+  We do have 
+
+  But this will result in the program's files being opne for longer than it
+  expected, so the application might fail if it was, for example, assuming
+  that
+
+	close(n);
+	assert(open("foo") == n);
+
+  perhaps the risk of this could be reduced by dup()ing the fds when
+  privatising them.
+
+
+  NB: I was using fdatasync() in there for a while, but sync_file_range()
+  was about five times faster.  This is because fdatasync() has to run an ext3
+  commit to sync the file metadata, but sync_file_range() doesn't do that.
+
+- Turn the concept into a real project, get it fed into distros.
+
+- Once all the code and concepts are stabilised, kill the LD_PRELOAD hack
+  and get the code into glibc.

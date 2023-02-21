@@ -1,0 +1,3 @@
+cp ~/Desktop/qemu* $TO/
+mkdir -p $TO/q/qemu
+cp $TO/qemu* $TO/q/  
