@@ -16,12 +16,14 @@ and [TogetherCompute](https://www.together.xyz/).
 
 ----------
 
-FlexGen aims to lower the resource requirements of large language model inference in the high-throughput setting down to a single commodity GPU (e.g., T4, 3090) and allow flexible deployment for various hardware setups.
+The high computational and memory requirements of large language model (LLM) inference traditionally make it feasible only with multiple high-end accelerators.
+FlexGen aims to lower the resource requirements of LLM inference down to a single commodity GPU (e.g., T4, 3090) and allow flexible deployment for various hardware setups.
+FlexGen focuses on high-throughput large-batch generation.
 
 The key features of FlexGen include:  
 
 ⚡ **High-Throughput Offloading**.  
-Higher-throughput generation than other offloading-based systems (e.g., HF accelerate, DeepSpeed Zero-Inference).
+Higher-throughput generation than other offloading-based systems (e.g., Hugging Face Accelerate, DeepSpeed Zero-Inference) - sometimes by an order of magnitude.
 
 📦 **Extreme Compression**.  
 Compress both the parameters and attention cache of models, such as OPT-175B, down to 4 bits with negligible accuracy loss.
@@ -58,10 +60,11 @@ How to [reproduce](benchmark/flexgen).
 
 ### Latency-throughput Trade-off
 The figure below shows the latency and throughput trade-off of three offloading-based systems on OPT-175B (left) and OPT-30B (right).
-FlexGen achieves higher maximum throughput for both models. "FlexGen(c)" is FlexGen with compression.
+FlexGen achieves higher maximum throughput for both models.
+Other systems cannot further increase throughput due to out-of-memory.
+"FlexGen(c)" is FlexGen with compression.
 
 <img src="https://github.com/FMInference/FlexGen/blob/main/docs/throughput_vs_latency.jpg" alt="logo" width="500"></img>
-
 
 ## How It Works
 FlexGen can be flexibly configured under various hardware resource constraints by aggregating memory and computation from the GPU, CPU, and disk. Through a linear programming optimizer, it searches for the best pattern to store and access the tensors, including weights, activations, and attention key/value (KV) cache. FlexGen further compresses both weights and KV cache to 4 bits with negligible accuracy loss. 
@@ -73,7 +76,6 @@ FlexGen utilizes a block schedule to reuse weight and overlap I/O with computati
 <img src="https://github.com/FMInference/FlexGen/raw/main/docs/block_schedule.jpg" alt="logo" width="500"></img>
 
 More details can be found in [our paper](docs/paper.pdf).
-
 
 ## Install
 Requirements:  
@@ -174,8 +176,8 @@ We plan to work on the following features. Community contributions are welcome.
 
 - [ ] Support Apple silicon M1/M2 deployment
 - [ ] Support Colab deployement
+- [ ] Add a text summarization application and more throughput-oriented applications.
 - [ ] Optimize the latency of the chatbot application
-- [ ] Add a text summarization application
 - [ ] Support more models (BLOOM, CodeGen, GLM)
 - [ ] Release the cost model and policy optimizer
 - [ ] Release a pip installable package
