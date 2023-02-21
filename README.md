@@ -125,10 +125,14 @@ If you do not have enough GPU/CPU memory, see the [Handle Out-of-memory](#handle
 ```
 # Chat with OPT-6.7B. You need at least 15GB of GPU memory.
 python3 chatbot.py --model facebook/opt-6.7b
+```
 
+```
 # Chat with OPT-30B. You need at least 64GB of CPU memory.
 python3 chatbot.py --model facebook/opt-30b --percent 0 100 100 0 100 0
+```
 
+```
 # Chat with instruction-tuned OPT-IML-MAX-30B. You need at least 64GB of CPU memory.
 python3 chatbot.py --model facebook/opt-iml-max-30b --percent 0 100 100 0 100 0
 ```
