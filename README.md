@@ -1,6 +1,9 @@
 # FlexGen
 
 FlexGen is a high-throughput generation engine for running large language models with limited GPU memory (e.g., a 16GB T4 GPU or a 24GB RTX3090 gaming card!).
+
+----------
+
 This is a research project developed by
 [HazyResearch@Stanford](https://hazyresearch.stanford.edu/),
 [SkyComputing@UC Berkeley](https://sky.cs.berkeley.edu/),
@@ -8,7 +11,9 @@ This is a research project developed by
 [CRFM@Stanford](https://crfm.stanford.edu/),
 and [TogetherCompute](https://www.together.xyz/).
 
-<a href="https://hazyresearch.stanford.edu/"><img src="https://identity.stanford.edu/wp-content/uploads/sites/3/2020/06/wordmark-nospace-red.png" height="25"></a> &nbsp;&nbsp;&nbsp; <a href="https://sky.cs.berkeley.edu/"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/University_of_California%2C_Berkeley_logo.svg/1280px-University_of_California%2C_Berkeley_logo.svg.png" height="30"></a> &nbsp;&nbsp;&nbsp; <a href="https://ds3lab.inf.ethz.ch/"><img src="https://user-images.githubusercontent.com/1608867/220273382-c09669b3-42fd-47c2-b88c-7ed55cb43820.png" height="25"></a> &nbsp;&nbsp;&nbsp; <a href="https://www.together.xyz/"><img src="https://cdn.discordapp.com/attachments/1032853929098236016/1077448896680296539/B3E025DC-1567-423E-B006-168F94D173CA.png" height="40"></a>
+<a href="https://hazyresearch.stanford.edu/"><img src="https://identity.stanford.edu/wp-content/uploads/sites/3/2020/06/wordmark-nospace-red.png" height="25"></a> &nbsp;&nbsp;&nbsp; <a href="https://sky.cs.berkeley.edu/"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/University_of_California%2C_Berkeley_logo.svg/1280px-University_of_California%2C_Berkeley_logo.svg.png" height="25"></a> &nbsp;&nbsp;&nbsp; <a href="https://ds3lab.inf.ethz.ch/"><img src="https://user-images.githubusercontent.com/1608867/220273382-c09669b3-42fd-47c2-b88c-7ed55cb43820.png" height="25"></a> &nbsp;&nbsp;&nbsp; <a href="https://www.together.xyz/"><img src="https://cdn.discordapp.com/attachments/1032853929098236016/1077448896680296539/B3E025DC-1567-423E-B006-168F94D173CA.png" height="30"></a>
+
+----------
 
 Large language models (LLMs) are at the heart of applications like ChatGPT and Copilot, but the high computational and memory requirements of LLM inference traditionally make it feasible only with multiple high-end accelerators.
 FlexGen aims to lower the resource requirements of LLM inference down to a single commodity GPU (e.g., T4, 3090) and allow flexible deployment for various hardware setups.
