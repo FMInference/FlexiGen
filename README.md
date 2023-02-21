@@ -23,8 +23,7 @@ FlexGen trades off latency for high-throughput large-batch generation.
 The key features of FlexGen include:  
 
 ⚡ **High-Throughput Offloading**.  
-Higher-throughput generation than other offloading-based systems (e.g., HF accelerate, DeepSpeed Zero-Inference), 
-for large-batch setting. This can be useful for batch inference scenarios.  
+Higher-throughput generation than other offloading-based systems (e.g., Hugging Face Accelerate, DeepSpeed Zero-Inference) - sometimes by an order of magnitude. This can be useful for batch inference scenarios.
 
 📦 **Extreme Compression**.  
 Compress both the parameters and attention cache of models, such as OPT-175B, down to 4 bits with negligible accuracy loss.
