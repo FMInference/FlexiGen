@@ -21,12 +21,6 @@ FlexGen aims to lower the resource requirements of large language model inferenc
 
 The key features of FlexGen include:  
 
-📦 **Extreme Compression**.  
-Compress both the parameters and attention cache of models, such as OPT-175B, down to 4 bits with negligible accuracy loss.
-
-🚀 **Scalability**.  
-Come with a distributed pipeline parallelism runtime to allow scaling if more GPUs are given.
-
 ⚡ **High-Throughput Offloading**.  
 Higher-throughput generation than other offloading-based systems (e.g., HF accelerate, DeepSpeed Zero-Inference), 
 for large-batch setting. This can be useful for batch inference scenarios.  
@@ -38,6 +32,12 @@ have enough powerful GPUs to hold the whole model.
 
 - We found FlexGen to be most useful for the batch processing setting (e.g., classifying or extracting information from
 many documents in batches). 
+
+📦 **Extreme Compression**.  
+Compress both the parameters and attention cache of models, such as OPT-175B, down to 4 bits with negligible accuracy loss.
+
+🚀 **Scalability**.  
+Come with a distributed pipeline parallelism runtime to allow scaling if more GPUs are given.
 
 | [**Read Paper**](docs/paper.pdf) | [**Join Discord**](https://discord.gg/JfphDTkBAh) |
 
