@@ -32,7 +32,7 @@ Compress both the parameters and attention cache of models, such as OPT-175B, do
 🚀 **Scalability**.  
 Come with a distributed pipeline parallelism runtime to allow scaling if more GPUs are given.
 
-❌ **Limitation**
+❌ **Limitation**.  
 As an offloading-based system running on weak GPUs, FlexGen also has its limitations.
 For small-batch inference, the throughput of FlexGen is significantly lower than the case when you have enough powerful GPUs to hold the whole model.
 This means FlexGen is mostly suitable for throughput-oriented batch processing settings (e.g., classifying or extracting information from
