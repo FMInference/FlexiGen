@@ -61,7 +61,7 @@ def main(args):
             inputs.input_ids,
             do_sample=True,
             temperature=0.7,
-            max_new_tokens=128,
+            max_new_tokens=96,
             stop=stop)
         outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0]
         try:
