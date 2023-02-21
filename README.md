@@ -17,13 +17,9 @@ and [TogetherCompute](https://www.together.xyz/).
 ----------
 
 The high computational and memory requirements of large language model (LLM) inference traditionally make it feasible only with multiple high-end accelerators.
-FlexGen aims to lower the resource requirements of LLM inference down to a single commodity GPU (e.g., T4, 3090) and allow flexible deployment for various hardware setups.
-FlexGen focuses on high-throughput large-batch generation.
+FlexGen aims to lower the resource requirements of large language model inference in the high-throughput setting down to a single commodity GPU (e.g., T4, 3090) and allow flexible deployment for various hardware setups. The key technique behind FlexGen is to tradeoff between **latency** and **throughput**. 
 
 The key features of FlexGen include:  
-
-⚡ **High-Throughput Offloading**.  
-Higher-throughput generation than other offloading-based systems (e.g., Hugging Face Accelerate, DeepSpeed Zero-Inference) - sometimes by an order of magnitude.
 
 📦 **Extreme Compression**.  
 Compress both the parameters and attention cache of models, such as OPT-175B, down to 4 bits with negligible accuracy loss.
@@ -31,6 +27,17 @@ Compress both the parameters and attention cache of models, such as OPT-175B, do
 🚀 **Scalability**.  
 Come with a distributed pipeline parallelism runtime to allow scaling if more GPUs are given.
 
+⚡ **High-Throughput Offloading**.  
+Higher-throughput generation than other offloading-based systems (e.g., HF accelerate, DeepSpeed Zero-Inference), 
+for large-batch setting. This can be useful for batch inference scenarios.  
+
+As an offloading-based system relying on weak GPUs, FlexGen also has several limitations:
+
+- For small batch inference, FlexGen throughput is significantly lower than the case when you 
+have enough powerful GPUs to hold the whole model.
+
+- We found FlexGen to be most useful for the batch processing setting (e.g., classifying or extracting information from
+many documents in batches). 
 
 | [**Read Paper**](docs/paper.pdf) | [**Join Discord**](https://discord.gg/JfphDTkBAh) |
 
