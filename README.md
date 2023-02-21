@@ -1,6 +1,6 @@
 # FlexGen
 
-FlexGen is a high-throughput generation engine for running large language models with limited GPU memory (e.g., a 16GB T4 or a 24GB RTX3090 gaming card!).
+FlexGen is a high-throughput generation engine for running large language models with limited GPU memory (e.g., a 16GB T4 GPU or a 24GB RTX3090 gaming card!).
 This is a research project developed by
 [HazyResearch@Stanford](https://hazyresearch.stanford.edu/),
 [SkyComputing@UC Berkeley](https://sky.cs.berkeley.edu/),
