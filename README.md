@@ -32,7 +32,7 @@ This is a research project developed by [HazyResearch@Stanford](https://hazyrese
 ### Generation Throughput (token/s)
 | System | OPT-6.7B | OPT-30B | OPT-175B |
 | ------ | -------- | ------- | -------- |
-| Huggingface Accelerate   | 25.12 | 0.62 | 0.01 |
+| Hugging Face Accelerate   | 25.12 | 0.62 | 0.01 |
 | DeepSpeed ZeRO-Inference | 9.28  | 0.60 | 0.01 |
 | Petals\*                 | -     | -    | 0.05 |
 | FlexGen                  | 25.26 | 7.32 | 0.69 |
@@ -82,7 +82,7 @@ pip3 install -e .
 
 ### OPT-1.3B
 To get started, you can try a small model like OPT-1.3B first. It fits into a single GPU so no offloading is required.
-FlexGen will automatically download weights from HuggingFace.
+FlexGen will automatically download weights from Hugging Face.
 ```
 python3 -m flexgen.flex_opt --model facebook/opt-1.3b
 ```
