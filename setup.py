@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 install_requires = [
-    "numpy", "tqdm", "pulp", "attrs",
+    "numpy", "tqdm", "pulp", "attrs", "fire",
     "transformers>=4.24", "torch>=1.12",
 ]
 
