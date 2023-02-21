@@ -20,7 +20,7 @@ FlexGen aims to lower the resource requirements of large language model inferenc
 The key features of FlexGen include:  
 
 ⚡ **High-Throughput Offloading**.  
-Higher-throughput generation than other offloading-based systems (e.g., HF accelerate, DeepSpeed Zero-Inference)
+Higher-throughput generation than other offloading-based systems (e.g., HF accelerate, DeepSpeed Zero-Inference).
 
 📦 **Extreme Compression**.  
 Compress both the parameters and attention cache of models, such as OPT-175B, down to 4 bits with negligible accuracy loss.
