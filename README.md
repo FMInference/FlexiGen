@@ -1,5 +1,12 @@
 # FlexGen
 
+This is a research project developed by
+[HazyResearch@Stanford](https://hazyresearch.stanford.edu/),
+[SkyComputing@UC Berkeley](https://sky.cs.berkeley.edu/),
+[DS3Lab@ETH Zurich](https://ds3lab.inf.ethz.ch/),
+[CRFM@Stanford](https://crfm.stanford.edu/),
+and [TogetherCompute](https://www.together.xyz/).
+
 FlexGen is a high-throughput generation engine for running large language models with limited GPU memory (e.g., a 16GB T4 or a 24GB RTX3090 gaming card!).
 
 Large language models (LLMs) are at the heart of applications like ChatGPT and Copilot, but the high computational and memory requirements of LLM inference traditionally make it feasible only with multiple high-end accelerators.
@@ -17,13 +24,6 @@ Compress both the parameters and attention cache of models, such as OPT-175B, do
 Come with a distributed pipeline parallelism runtime to allow scaling if more GPUs are given.
 
 | [**Read Paper**](docs/paper.pdf) | [**Join Discord**](https://discord.gg/JfphDTkBAh) |
-
-This is a research project developed by
-[HazyResearch@Stanford](https://hazyresearch.stanford.edu/),
-[SkyComputing@UC Berkeley](https://sky.cs.berkeley.edu/),
-[DS3Lab@ETH Zurich](https://ds3lab.inf.ethz.ch/),
-[CRFM@Stanford](https://crfm.stanford.edu/),
-and [TogetherCompute](https://www.together.xyz/).
 
 ## Content
 - [Benchmark Results](#benchmark-results)
