@@ -17,8 +17,7 @@ and [TogetherCompute](https://www.together.xyz/).
 ----------
 
 The high computational and memory requirements of large language model (LLM) inference traditionally make it feasible only with multiple high-end accelerators.
-FlexGen aims to lower the resource requirements of LLM inference down to a single commodity GPU (e.g., T4, 3090) and allow flexible deployment for various hardware setups.
-FlexGen trades off latency for high-throughput large-batch generation. 
+FlexGen aims to lower the resource requirements of LLM inference down to a single commodity GPU (e.g., T4, 3090) and allow flexible deployment for various hardware setups. The key technique behind FlexGen is to tradeoff between **latency** and **throughput**.
 
 The key features of FlexGen include:  
 
@@ -33,8 +32,8 @@ Come with a distributed pipeline parallelism runtime to allow scaling if more GP
 
 ❌ **Limitation**.  
 As an offloading-based system running on weak GPUs, FlexGen also has its limitations.
-For small-batch inference, the throughput of FlexGen is significantly lower than the case when you have enough powerful GPUs to hold the whole model.
-This means FlexGen is mostly suitable for throughput-oriented batch processing settings (e.g., classifying or extracting information from
+The throughput of FlexGen is significantly lower than the case when you have enough powerful GPUs to hold the whole model, especially for small-batch cases.
+FlexGen is mostly suitable for throughput-oriented batch processing settings (e.g., classifying or extracting information from
 many documents in batches). 
 
 | [**Read Paper**](docs/paper.pdf) | [**Join Discord**](https://discord.gg/JfphDTkBAh) |
