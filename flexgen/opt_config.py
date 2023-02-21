@@ -45,6 +45,13 @@ def get_opt_config(name, **kwargs):
     if "/" in name:
         name = name.split("/")[1]
     name = name.lower()
+
+    # Handle opt-iml-30b and opt-iml-max-30b
+    if "-iml-max" in name:
+        name = name.replace("-iml-max", "")
+    if "-iml" in name:
+        name = name.replace("-iml", "")
+
     if name == "opt-125m":
         config = OptConfig(name=name,
             max_seq_len=2048, num_hidden_layers=12, n_head=12,

@@ -130,6 +130,11 @@ python3 chatbot.py --model facebook/opt-6.7b
 # Chat with OPT-30B
 # You need at least 64GB of CPU memory.
 python3 chatbot.py --model facebook/opt-30b --percent 0 100 100 0 100 0
+
+# Chat with OPT-IML-MAX-30B
+# You need at least 64GB of CPU memory.
+python3 chatbot.py --model facebook/opt-iml-max-30b --percent 0 100 100 0 100 0
+
 ```
 
 ### Example output
@@ -156,7 +161,7 @@ We plan to work on the following features. Community conributions are welcome.
 - [ ] Support Colab deployement
 - [ ] Optimize the latency of the chatbot application
 - [ ] Add a text summarization application
-- [ ] Support more models (BLOOM, CodeGen, GLM, OPT-IML)
+- [ ] Support more models (BLOOM, CodeGen, GLM)
 - [ ] Release the cost model and policy optimizer
 - [ ] Release a pip installable package
 
