@@ -102,10 +102,11 @@ You can then try CPU/disk offloading by
 python3 -m flexgen.flex_opt --model facebook/opt-175b --percent 0 0 0 0 0 0 --offload-dir YOUR_SSD_FOLDER
 ```
 
-### How to set the offloading strategy?
+### How to set the offloading strategy and `--percent`?
 We will release an automatic policy optimizer later, but now you have to manually try a few strategies.
 The idea of high-throughput generation is to offload parameters and attention cache as much as possible to CPU and disk if necessary.
 You can see the reference startegies in our benchmark [here](https://github.com/Ying1123/FlexGen/blob/956859634efb9133f39b4e3fac7bfb0ce5dfadbf/benchmark/flexgen/bench_suite.py#L39-L79).
+To avoid out-of-memory, you can tune the `--percent` of offload more tensors to CPU and Disk.
 
 ## Scaling to Distributed GPUs
 If you have more GPUs, FlexGen can combine offloading with pipeline parallelism to allow scaling.
@@ -150,6 +151,7 @@ Assistant: Well, there are a number of things you can do for your anniversary. F
 
 ### Handle Out-of-memory
 If you do not have enough GPU/CPU memory, here are a few things you can try.
+They save more memory but run slower.
 
 - Enable weight compression by adding `--compress-weight`.
 - Offload weights to disk by using `--percent 0 0 100 0 100 0`.

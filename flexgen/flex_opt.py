@@ -1270,12 +1270,13 @@ def add_parser_arguments(parser):
     parser.add_argument("--gpu-batch-size", type=int, default=4)
     parser.add_argument("--percent", nargs="+", type=int,
         default=[100, 0, 100, 0, 100, 0],
-        help="Six numbers. They are the percentage of weight on GPU, "
-	     "the percentage of weight on CPU, "
-	     "the percentage of attention cache on GPU, "
-	     "the percentage of attention cache on CPU, "
-	     "the percentage of activations on GPU, "
-	     "the percentage of activations on CPU")
+        help="Six numbers. They are "
+         "the percentage of weight on GPU, "
+         "the percentage of weight on CPU, "
+         "the percentage of attention cache on GPU, "
+         "the percentage of attention cache on CPU, "
+         "the percentage of activations on GPU, "
+         "the percentage of activations on CPU")
     parser.add_argument("--sep-layer", type=str2bool, nargs='?',
         const=True, default=True)
     parser.add_argument("--pin-weight", type=str2bool, nargs="?",

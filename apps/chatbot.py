@@ -92,7 +92,8 @@ if __name__ == "__main__":
         help="The directory to offload tensors. ")
     parser.add_argument("--percent", nargs="+", type=int,
         default=[100, 0, 100, 0, 100, 0],
-        help="Six numbers. They are the percentage of weight on GPU, "
+        help="Six numbers. They are "
+         "the percentage of weight on GPU, "
          "the percentage of weight on CPU, "
          "the percentage of attention cache on GPU, "
          "the percentage of attention cache on CPU, "
