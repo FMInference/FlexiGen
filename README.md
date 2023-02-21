@@ -18,12 +18,12 @@ and [TogetherCompute](https://www.together.xyz/).
 
 The high computational and memory requirements of large language model (LLM) inference traditionally make it feasible only with multiple high-end accelerators.
 FlexGen aims to lower the resource requirements of LLM inference down to a single commodity GPU (e.g., T4, 3090) and allow flexible deployment for various hardware setups.
-FlexGen focuses on high-throughput large-batch generation.
+FlexGen trades off latency for high-throughput large-batch generation. 
 
 The key features of FlexGen include:  
 
 ⚡ **High-Throughput Offloading**.  
-Higher-throughput generation than other offloading-based systems (e.g., Hugging Face Accelerate, DeepSpeed Zero-Inference) - sometimes by an order of magnitude.
+Higher-throughput generation than other offloading-based systems (e.g., Hugging Face Accelerate, DeepSpeed Zero-Inference) - sometimes by an order of magnitude. This can be useful for batch inference scenarios.
 
 📦 **Extreme Compression**.  
 Compress both the parameters and attention cache of models, such as OPT-175B, down to 4 bits with negligible accuracy loss.
@@ -31,6 +31,11 @@ Compress both the parameters and attention cache of models, such as OPT-175B, do
 🚀 **Scalability**.  
 Come with a distributed pipeline parallelism runtime to allow scaling if more GPUs are given.
 
+❌ **Limitation**.  
+As an offloading-based system running on weak GPUs, FlexGen also has its limitations.
+For small-batch inference, the throughput of FlexGen is significantly lower than the case when you have enough powerful GPUs to hold the whole model.
+This means FlexGen is mostly suitable for throughput-oriented batch processing settings (e.g., classifying or extracting information from
+many documents in batches). 
 
 | [**Read Paper**](docs/paper.pdf) | [**Join Discord**](https://discord.gg/JfphDTkBAh) |
 
