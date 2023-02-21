@@ -50,7 +50,7 @@ Come with a distributed pipeline parallelism runtime to allow scaling if more GP
 | FlexGen with Compression | **29.12** | **8.38** | **1.12** |
 
 - Hardware: an NVIDIA T4 (16GB) instance on GCP with 208GB of DRAM and 1.5TB of SSD.  
-- Workload: input sequence length = 512, output sequence length = 32. The batch size is tuned to a large value that maximizes the generation throughput for each system. (e.g., more than 128 for OPT-175B on FlexGen).
+- Workload: input sequence length = 512, output sequence length = 32. The batch size is tuned to a large value that maximizes the generation throughput for each system. (e.g., 256 for OPT-175B on FlexGen).
 - Metric: generation throughput (token/s) = number of the generated tokens / (time for processing prompts + time for generation).  
 
 How to [reproduce](benchmark/flexgen).
