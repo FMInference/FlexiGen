@@ -1,3 +1,9 @@
+"""
+The OPT model configurations and weight downloading utilities.
+
+Some functions are adopted from https://github.com/alpa-projects/alpa/tree/main/examples/llm_serving/model.
+"""
+
 import argparse
 import dataclasses
 import os
