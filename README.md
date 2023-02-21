@@ -16,7 +16,10 @@ Compress both the parameters and attention cache of models, such as OPT-175B, do
 🚀 **Scalability**.  
 Come with a distributed pipeline parallelism runtime to allow scaling if more GPUs are given.
 
-| [**Read Paper**](docs/paper.pdf) | [**Join Discord**](https://discord.gg/JfphDTkBAh) |
+
+This is a research project developed by [HazyResearch@Stanford](https://hazyresearch.stanford.edu/), [DS3Lab@ETH Zurich](https://ds3lab.inf.ethz.ch/), [CRFM@Stanford](https://crfm.stanford.edu/), [SkyComputing@UC Berkeley](https://sky.cs.berkeley.edu/) and [TogetherCompute](https://www.together.xyz/).
+
+| [**Read Paper**](docs/paper.md) | [**Join Discord**](https://discord.gg/JfphDTkBAh) |
 
 ## Content
 - [Benchmark Results](#benchmark-results)
@@ -59,7 +62,7 @@ FlexGen utilizes a block schedule to reuse weight and overlap I/O with computati
 
 <img src="https://github.com/Ying1123/FlexGen/raw/main/docs/block_schedule.jpg" alt="logo" width="500"></img>
 
-More details can be found in [our paper](docs/paper.pdf).
+More details can be found in [our paper](docs/paper.md).
 
 
 ## Install
@@ -113,7 +116,7 @@ If you have more GPUs, FlexGen can combine offloading with pipeline parallelism 
 For example, if you have 2 GPUs but the aggregated GPU memory is less than the model size, you still need offloading. FlexGen allow you to do pipeline parallelism with these 2 GPUs to accelerate the generation.
 See examples [here](https://github.com/Ying1123/FlexGen/tree/main/benchmark/flexgen#distributed-gpus).
 
-## Run Chatbot with OPT models on a Single GPU
+## Run Chatbot with OPT Models on a Single GPU
 [apps/chatbot.py](apps/chatbot.py) shows how to build a chatbot with FlexGen and OPT models.
 While FlexGen is mainly optimized for large-batch throughput-oriented scenarios like dataset evaluations and information extraction,
 FlexGen can also be used for interactive applications like chatbot with better performance than other offloading-based systems.
@@ -138,7 +141,7 @@ python3 chatbot.py --model facebook/opt-30b --percent 0 100 100 0 100 0
 python3 chatbot.py --model facebook/opt-iml-max-30b --percent 0 100 100 0 100 0
 ```
 
-### Example output
+### Example Output
 ```
 A chat between a curious human and a knowledgeable artificial intelligence assistant.
 Human: Hello! What can you do?
@@ -166,6 +169,3 @@ We plan to work on the following features. Community conributions are welcome.
 - [ ] Support more models (BLOOM, CodeGen, GLM)
 - [ ] Release the cost model and policy optimizer
 - [ ] Release a pip installable package
-
-## Acknowledgement
-This is a research project developed by [HazyResearch@Stanford](https://hazyresearch.stanford.edu/), [DS3Lab@ETH Zurich](https://ds3lab.inf.ethz.ch/), [CRFM@Stanford](https://crfm.stanford.edu/), [SkyComputing@UC Berkeley](https://sky.cs.berkeley.edu/) and [TogetherCompute](https://www.together.xyz/).
