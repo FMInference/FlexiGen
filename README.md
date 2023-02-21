@@ -22,7 +22,7 @@ Come with a distributed pipeline parallelism runtime to allow scaling if more GP
 - [Benchmark Results](#benchmark-results)
 - [Install](#install)
 - [Get Started with a Single GPU](#get-started-with-a-single-gpu)
-- [Run Chatbot with OPT models up to 175B on a Single GPU](#run-chatbot-with-opt-models-up-to-175b-on-a-single-gpu)
+- [Run "ChatOPT" with OPT models on a Single GPU](#)
 - [Scaling to Distributed GPUs](#scaling-to-distributed-gpus)
 - [Roadmap](#roadmap)
 
@@ -112,7 +112,7 @@ If you have more GPUs, FlexGen can combine offloading with pipeline parallelism 
 For example, if you have 2 GPUs but the aggregated GPU memory is less than the model size, you still need offloading. FlexGen allow you to do pipeline parallelism with these 2 GPUs to accelerate the generation.
 See examples [here](https://github.com/Ying1123/FlexGen/tree/main/benchmark/flexgen#distributed-gpus).
 
-## Run Chatbot with OPT models up to 175B on a Single GPU
+## Run "ChatOPT" with OPT models on a Single GPU
 [apps/chatbot.py](apps/chatbot.py) shows how to build a chatbot with FlexGen and OPT models.
 While FlexGen is mainly optimized for large-batch throughput-oriented scenarios like dataset evaluations and information extraction,
 FlexGen can also be used for interactive applications like chatbot with better performance than other offloading-based systems.
@@ -123,18 +123,14 @@ You can use the default commands below.
 If you do not have enough GPU/CPU memory, see the [Handle Out-of-memory](#handle-out-of-memory) section.
 
 ```
-# Chat with OPT-6.7B
-# You need at least 15GB of GPU memory.
+# Chat with OPT-6.7B. You need at least 15GB of GPU memory.
 python3 chatbot.py --model facebook/opt-6.7b
 
-# Chat with OPT-30B
-# You need at least 64GB of CPU memory.
+# Chat with OPT-30B. You need at least 64GB of CPU memory.
 python3 chatbot.py --model facebook/opt-30b --percent 0 100 100 0 100 0
 
-# Chat with OPT-IML-MAX-30B
-# You need at least 64GB of CPU memory.
+# Chat with instruction-tuned OPT-IML-MAX-30B. You need at least 64GB of CPU memory.
 python3 chatbot.py --model facebook/opt-iml-max-30b --percent 0 100 100 0 100 0
-
 ```
 
 ### Example output
@@ -152,7 +148,7 @@ Assistant: Well, there are a number of things you can do for your anniversary. F
 If you do not have enough GPU/CPU memory, here are a few things you can try.
 
 - Enable weight compression by adding `--compress-weight`.
-- Offload weights to disk by adding `--percent 0 0 100 0 100 0`.
+- Offload weights to disk by using `--percent 0 0 100 0 100 0`.
 
 ## Roadmap
 We plan to work on the following features. Community conributions are welcome.
