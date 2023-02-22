@@ -22,7 +22,7 @@ FlexGen aims to lower the resource requirements of LLM inference down to a singl
 The key features of FlexGen include:  
 
 ⚡ **High-Throughput Offloading**.  
-Higher-throughput generation than other offloading-based systems (e.g., Hugging Face Accelerate, DeepSpeed Zero-Inference) - sometimes by an order of magnitude. This can be useful for batch inference scenarios.
+Higher-throughput generation than other offloading-based systems (e.g., Hugging Face Accelerate, DeepSpeed Zero-Inference) - sometimes by orders of magnitude. This can be useful for batch inference scenarios.
 
 📦 **Extreme Compression**.  
 Compress both the parameters and attention cache of models, such as OPT-175B, down to 4 bits with negligible accuracy loss.
@@ -33,8 +33,7 @@ Come with a distributed pipeline parallelism runtime to allow scaling if more GP
 ❌ **Limitation**.  
 As an offloading-based system running on weak GPUs, FlexGen also has its limitations.
 The throughput of FlexGen is significantly lower than the case when you have enough powerful GPUs to hold the whole model, especially for small-batch cases.
-FlexGen is mostly suitable for throughput-oriented batch processing settings (e.g., classifying or extracting information from
-many documents in batches). 
+FlexGen is mostly optimized for throughput-oriented batch processing settings (e.g., classifying or extracting information from many documents in batches).
 
 | [**Read Paper**](docs/paper.pdf) | [**Join Discord**](https://discord.gg/JfphDTkBAh) |
 
@@ -148,12 +147,12 @@ python3 chatbot.py --model facebook/opt-6.7b
 ```
 
 ```
-# Chat with OPT-30B. You need at least 64GB of CPU memory.
+# Chat with OPT-30B. You need about 90GB of CPU memory.
 python3 chatbot.py --model facebook/opt-30b --percent 0 100 100 0 100 0
 ```
 
 ```
-# Chat with instruction-tuned OPT-IML-MAX-30B. You need at least 64GB of CPU memory.
+# Chat with instruction-tuned OPT-IML-MAX-30B. You need about 90GB of CPU memory.
 python3 chatbot.py --model facebook/opt-iml-max-30b --percent 0 100 100 0 100 0
 ```
 
@@ -172,8 +171,9 @@ Assistant: Well, there are a number of things you can do for your anniversary. F
 If you do not have enough GPU/CPU memory, here are a few things you can try.
 They save more memory but run slower.
 
-- Enable weight compression by adding `--compress-weight`.
-- Offload weights to disk by using `--percent 0 0 100 0 100 0`.
+- Do not pin weights adding `--pin-weight 0`. This can reduce the weight memory usage on CPU by around 20%.
+- Enable weight compression by adding `--compress-weight`. This can reduce the weight memory usage by around 70%.
+- Offload weights to disk by using `--percent 0 0 100 0 100 0`. This requires very little CPU and GPU memory.
 
 ## Roadmap
 We plan to work on the following features. Community contributions are welcome.
