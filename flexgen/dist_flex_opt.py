@@ -171,7 +171,7 @@ class DistOptLM(OptLM):
             self.hidden[t][i][j][k].store(val)
             return
         if self.num_pipeline_stages > 1 and not (i == 0 and self.pipeline_rank == 0):
-            # Alreday received the input from previous hidden states
+            # Already received the input from previous hidden states
             self.hidden[t][i][j][k].val = self.hidden[t][i][j][k].val.move(dst)
             return
         gpu_batch_size = self.policy.gpu_batch_size

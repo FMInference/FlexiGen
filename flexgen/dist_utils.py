@@ -38,7 +38,7 @@ def initialize_distributed(head_ip, port, world_size, rank, local_rank,
                 _PIPELINE_PARALLEL_SUCC_GROUP = group
 
     suppress_output(rank)
-    print("Finshed initializing distributed environment")
+    print("Finished initializing distributed environment")
 
 def get_pipeline_parallel_pred_group():
     return _PIPELINE_PARALLEL_PRED_GROUP
