@@ -1,6 +1,7 @@
 # FlexGen
 
 FlexGen is a high-throughput generation engine for running large language models with limited GPU memory (e.g., a 16GB T4 GPU or a 24GB RTX3090 gaming card!).
+FlexGen allows high-throughput generation by increasing the effective batch size through IO-efficient offloading and compression.
 
 ----------
 
@@ -17,12 +18,12 @@ and [TogetherCompute](https://www.together.xyz/).
 ----------
 
 The high computational and memory requirements of large language model (LLM) inference traditionally make it feasible only with multiple high-end accelerators.
-FlexGen aims to lower the resource requirements of LLM inference down to a single commodity GPU (e.g., T4, 3090) and allow flexible deployment for various hardware setups. The key technique behind FlexGen is to trade off between **latency** and **throughput**.
+FlexGen aims to lower the resource requirements of LLM inference down to a single commodity GPU (e.g., T4, 3090) and allow flexible deployment for various hardware setups. The key technique behind FlexGen is to trade off between **latency** and **throughput** by developing techniques to increase the effective batch size.
 
 The key features of FlexGen include:  
 
-⚡ **High-Throughput Offloading**.  
-Higher-throughput generation than other offloading-based systems (e.g., Hugging Face Accelerate, DeepSpeed Zero-Inference) - sometimes by orders of magnitude. This can be useful for batch inference scenarios.
+⚡ **High-Throughput, Large-Batch Offloading**.  
+Higher-throughput generation than other offloading-based systems (e.g., Hugging Face Accelerate, DeepSpeed Zero-Inference) - sometimes by orders of magnitude. The key innovation is a new offloading technique that can effectively increase the batch size. This can be useful for batch inference scenarios, such as benchmarking (e.g., [HELM](https://github.com/stanford-crfm/helm)) and [data wrangling](https://arxiv.org/abs/2205.09911).
 
 📦 **Extreme Compression**.  
 Compress both the parameters and attention cache of models, such as OPT-175B, down to 4 bits with negligible accuracy loss.
@@ -33,7 +34,7 @@ Come with a distributed pipeline parallelism runtime to allow scaling if more GP
 ❌ **Limitation**.  
 As an offloading-based system running on weak GPUs, FlexGen also has its limitations.
 The throughput of FlexGen is significantly lower than the case when you have enough powerful GPUs to hold the whole model, especially for small-batch cases.
-FlexGen is mostly optimized for throughput-oriented batch processing settings (e.g., classifying or extracting information from many documents in batches).
+FlexGen is mostly optimized for throughput-oriented batch processing settings (e.g., classifying or extracting information from many documents in batches), on single GPUs.
 
 | [**Read Paper**](docs/paper.pdf) | [**Join Discord**](https://discord.gg/JfphDTkBAh) |
 
@@ -62,6 +63,7 @@ FlexGen is mostly optimized for throughput-oriented batch processing settings (e
 How to [reproduce](benchmark/flexgen).
 
 ### Latency-throughput Trade-off
+Since FlexGen increases throughput by increasing the batch size, it also increases latency - a classic and fundamental trade-off.
 The figure below shows the latency and throughput trade-off of three offloading-based systems on OPT-175B (left) and OPT-30B (right).
 FlexGen achieves higher maximum throughput for both models.
 Other systems cannot further increase throughput due to out-of-memory.
@@ -73,7 +75,7 @@ Other systems cannot further increase throughput due to out-of-memory.
 FlexGen can be flexibly configured under various hardware resource constraints by aggregating memory and computation from the GPU, CPU, and disk. Through a linear programming optimizer, it searches for the best pattern to store and access the tensors, including weights, activations, and attention key/value (KV) cache. FlexGen further compresses both weights and KV cache to 4 bits with negligible accuracy loss. 
 
 One key idea of FlexGen is to play the latency-throughput trade-off. Achieving low latency is inherently challenging for offloading methods, 
-but the efficiency of offloading can be greatly boosted for throughput-oriented scenarios (see the figure above).
+but the I/O efficiency of offloading can be greatly boosted for throughput-oriented scenarios (see the figure above).
 FlexGen utilizes a block schedule to reuse weight and overlap I/O with computation, as shown in figure (b) below, while other baseline systems use an inefficient row-by-row schedule, as shown in figure (a) below.
 
 <img src="https://github.com/FMInference/FlexGen/raw/main/docs/block_schedule.jpg" alt="logo" width="500"></img>
@@ -185,3 +187,10 @@ We plan to work on the following features. Community contributions are welcome.
 - [ ] Support more models (BLOOM, CodeGen, GLM)
 - [ ] Release the cost model and policy optimizer
 - [ ] Release a pip installable package
+
+## Recent Changes
+Thanks to early feedback about this release, we realized that early versions of this README and our paper were a bit unclear about the purpose of FlexGen and why we're excited about it.
+Our primary contributions are increasing throughput on single GPU instances - by effectively increasing the batch size.
+We're really excited about our techniques for offloading and automatically searching through the design space, and that our results that suggest that it's possible to go down to 4-bit quantization without hurting accuracy.
+This naturally trades off latency, but we think it's a really interesting direction for future work.
+We'd like to thank everyone for their feedback - keep it coming!
