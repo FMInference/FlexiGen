@@ -204,7 +204,7 @@ class TorchDevice:
             self.attention_compute_workspace = []
             self.workspace_pt = 0
 
-            # We currenly separate SelfAttention and MLP as two layers,
+            # We currently separate SelfAttention and MLP as two layers,
             # so we only need one workspace instead of two.
             for i in range(1 if policy.sep_layer else 2):
                 shape = (max_seq_len, b * n_head, head_dim)

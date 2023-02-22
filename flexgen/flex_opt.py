@@ -978,7 +978,7 @@ class OptLM:
             else:
                 timers("generate").costs.append(self.num_layers * batch_cost)
 
-        # Debug the costs of individual funcions
+        # Debug the costs of individual functions
         print(f"#layers: {self.num_layers}")
 
         print(f"#batches prefill:  "

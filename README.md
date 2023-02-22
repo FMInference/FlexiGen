@@ -74,7 +74,7 @@ FlexGen can be flexibly configured under various hardware resource constraints b
 
 One key idea of FlexGen is to play the latency-throughput trade-off. Achieving low latency is inherently challenging for offloading methods, 
 but the efficiency of offloading can be greatly boosted for throughput-oriented scenarios (see the figure above).
-FlexGen utilizes a block schedule to reuse weight and overlap I/O with computation, as shown in figure (b) below, while other baseline systems use an ineffiicent row-by-row schedule, as shown in figure (a) below.
+FlexGen utilizes a block schedule to reuse weight and overlap I/O with computation, as shown in figure (b) below, while other baseline systems use an inefficient row-by-row schedule, as shown in figure (a) below.
 
 <img src="https://github.com/FMInference/FlexGen/raw/main/docs/block_schedule.jpg" alt="logo" width="500"></img>
 
@@ -115,7 +115,7 @@ python3 -m flexgen.flex_opt --model facebook/opt-30b --percent 0 100 100 0 100 0
 
 ### OPT-175B
 To run OPT-175B, you need to download the weights from [metaseq](https://github.com/facebookresearch/metaseq/tree/main/projects/OPT) and convert the weights into Alpa [format](https://alpa.ai/tutorials/opt_serving.html#convert-opt-175b-weights-into-alpa-formats).
-You can then try to offloaind all wieghts to disk by
+You can then try to offloading all weights to disk by
 ```
 python3 -m flexgen.flex_opt --model facebook/opt-175b --percent 0 0 100 0 100 0 --offload-dir YOUR_SSD_FOLDER
 ```
@@ -123,7 +123,7 @@ python3 -m flexgen.flex_opt --model facebook/opt-175b --percent 0 0 100 0 100 0 
 ### How to set the offloading strategy and `--percent`?
 We will release an automatic policy optimizer later, but now you have to manually try a few strategies.
 The idea of high-throughput generation is to offload parameters and attention cache as much as possible to the CPU and disk if necessary.
-You can see the reference startegies in our benchmark [here](https://github.com/FMInference/FlexGen/blob/9d092d848f106cd9eaf305c12ef3590f7bcb0277/benchmark/flexgen/bench_suite.py#L39-L79).
+You can see the reference strategies in our benchmark [here](https://github.com/FMInference/FlexGen/blob/9d092d848f106cd9eaf305c12ef3590f7bcb0277/benchmark/flexgen/bench_suite.py#L39-L79).
 To avoid out-of-memory, you can tune the `--percent` of offload more tensors to the CPU and disk.
 
 ## Scaling to Distributed GPUs
@@ -179,7 +179,7 @@ They save more memory but run slower.
 We plan to work on the following features. Community contributions are welcome.
 
 - [ ] Support Apple silicon M1/M2 deployment
-- [ ] Support Colab deployement
+- [ ] Support Colab deployment
 - [ ] Add a text summarization application and more throughput-oriented applications.
 - [ ] Optimize the latency of the chatbot application
 - [ ] Support more models (BLOOM, CodeGen, GLM)
