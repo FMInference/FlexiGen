@@ -23,7 +23,7 @@ class _Timer:
         if sync_func:
             sync_func()
 
-        self.start_time = time.time()
+        self.start_time = time.perf_counter()
         self.start_times.append(self.start_time)
         self.started = True
 
@@ -33,7 +33,7 @@ class _Timer:
         if sync_func:
             sync_func()
 
-        stop_time = time.time()
+        stop_time = time.perf_counter()
         self.costs.append(stop_time - self.start_time)
         self.stop_times.append(stop_time)
         self.started = False
@@ -88,7 +88,7 @@ class Tracer:
         if sync_func:
             sync_func()
 
-        self.events.append(Event(time.time(), name, info))
+        self.events.append(Event(time.perf_counter(), name, info))
 
 
 tracer = Tracer()
