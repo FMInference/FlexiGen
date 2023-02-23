@@ -1227,13 +1227,14 @@ def run_flexgen(args):
     _, gpu_peak_mem = gpu.mem_stats()
     _, cpu_peak_mem = cpu.mem_stats()
 
-    outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)
-    show_str = "Outputs:\n" + 70 * '-' + "\n"
-    for i in [0, len(outputs)-1]:
-        show_str += f"{i}: {outputs[i]}\n"
-        show_str += "-" * 70 + "\n"
-    if args.verbose >= 2:
-        print(show_str)
+    if DUMMY_WEIGHT not in args.path:
+        outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)
+        show_str = "Outputs:\n" + 70 * '-' + "\n"
+        for i in [0, len(outputs)-1]:
+            show_str += f"{i}: {outputs[i]}\n"
+            show_str += "-" * 70 + "\n"
+        if args.verbose >= 2:
+            print(show_str)
 
     gpu.print_stats()
     cpu.print_stats()
