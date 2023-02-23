@@ -191,6 +191,6 @@ We plan to work on the following features. Community contributions are welcome.
 ## Recent Changes
 Thanks to early feedback about this release, we realized that early versions of this README and our paper were a bit unclear about the purpose of FlexGen and why we're excited about it.
 Our primary contributions are increasing throughput on single GPU instances - by effectively increasing the batch size.
-We're really excited about our techniques for offloading and automatically searching through the design space, and that our results that suggest that it's possible to go down to 4-bit quantization without hurting accuracy.
+We're really excited about our techniques for offloading and automatically searching through the design space, as well as our results that suggest it's possible to go down to 4-bit quantization without hurting accuracy.
 This naturally trades off latency, but we think it's a really interesting direction for future work.
 We'd like to thank everyone for their feedback - keep it coming!
