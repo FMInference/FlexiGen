@@ -1,0 +1,1 @@
+python.exe chatbot.py --model facebook/opt-66b --percent 50 10 100 0 100 0 --compress-weight --compress-cache
