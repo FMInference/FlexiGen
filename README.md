@@ -5,15 +5,9 @@ FlexGen allows high-throughput generation by increasing the effective batch size
 
 ----------
 
-This is a research project developed by
-[HazyResearch@Stanford](https://hazyresearch.stanford.edu/),
-[SkyComputing@UC Berkeley](https://sky.cs.berkeley.edu/),
-[DS3Lab@ETH Zurich](https://ds3lab.inf.ethz.ch/),
-[FAIR@Meta](https://ai.facebook.com/),
-[CRFM@Stanford](https://crfm.stanford.edu/),
-and [TogetherCompute](https://www.together.xyz/).
+FlexGen was made possible thanks to a collaboration with
 
-<a href="https://hazyresearch.stanford.edu/"><img src="https://identity.stanford.edu/wp-content/uploads/sites/3/2020/06/wordmark-nospace-red.png" height="25"></a> &nbsp;&nbsp;&nbsp; <a href="https://sky.cs.berkeley.edu/"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/University_of_California%2C_Berkeley_logo.svg/1280px-University_of_California%2C_Berkeley_logo.svg.png" height="25"></a> &nbsp;&nbsp;&nbsp; <a href="https://ds3lab.inf.ethz.ch/"><img src="https://user-images.githubusercontent.com/1608867/220273382-c09669b3-42fd-47c2-b88c-7ed55cb43820.png" height="30"></a> &nbsp;&nbsp;&nbsp; <a href="https://www.together.xyz/"><img src="https://images.squarespace-cdn.com/content/v1/6358bea282189a0adf57fe16/eef09191-631f-40d9-9bfd-f875b25bcf0b/together-logo-black-transparent2.png" height="25"></a>
+<a href="https://cs.stanford.edu/"><img src="https://identity.stanford.edu/wp-content/uploads/sites/3/2020/06/wordmark-nospace-red.png" height="20"></a> &nbsp;&nbsp;&nbsp; <a href="https://sky.cs.berkeley.edu/"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/University_of_California%2C_Berkeley_logo.svg/1280px-University_of_California%2C_Berkeley_logo.svg.png" height="22"></a> &nbsp;&nbsp;&nbsp; <a href="https://ds3lab.inf.ethz.ch/"><img src="https://user-images.githubusercontent.com/1608867/220273382-c09669b3-42fd-47c2-b88c-7ed55cb43820.png" height="20"></a> &nbsp;&nbsp;&nbsp; <a href="https://hazyresearch.stanford.edu/"><img src="https://hazyresearch.stanford.edu/hazy-logo.png" height="20"></a> &nbsp;&nbsp;&nbsp; <a href="https://www.together.xyz/"><img src="https://images.squarespace-cdn.com/content/v1/6358bea282189a0adf57fe16/eef09191-631f-40d9-9bfd-f875b25bcf0b/together-logo-black-transparent2.png" height="20"></a>
 
 ----------
 
