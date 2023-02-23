@@ -18,3 +18,14 @@ The batch size is tuned for each system to achieve its maximum throughput with t
 | DeepSpeed ZeRO-Inference | 16 (cpu) | 4 (cpu)   | 1 (disk)   |
 | FlexGen                  | 2  (gpu) | 144 (cpu) | 256 (disk) |
 | FlexGen with Compression | 72 (gpu) | 512 (cpu) | 144 (cpu)  |
+
+### Generation Throughput (token/s)
+We attach the generation throughput here for reference.
+
+| System | OPT-6.7B | OPT-30B | OPT-175B |
+| ------ | -------- | ------- | -------- |
+| Hugging Face Accelerate   | 25.12 | 0.62 | 0.01 |
+| DeepSpeed ZeRO-Inference | 9.28  | 0.60 | 0.01 |
+| Petals\*                 | -     | -    | 0.05 |
+| FlexGen                  | 25.26 | 7.32 | 0.69 |
+| FlexGen with Compression | **29.12** | **8.38** | **1.12** |
