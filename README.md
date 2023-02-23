@@ -36,7 +36,7 @@ FlexGen is mostly optimized for throughput-oriented batch processing settings (e
 - [Benchmark Results](#benchmark-results)
 - [Install](#install)
 - [Get Started with a Single GPU](#get-started-with-a-single-gpu)
-- [Run Chatbot with OPT models on a Single GPU](#run-chatbot-with-opt-models-on-a-single-gpu )
+- [API Example: Chatbot on a single GPU](#api-example-chatbot-on-a-single-gpu)
 - [Scaling to Distributed GPUs](#scaling-to-distributed-gpus)
 - [Roadmap](#roadmap)
 
@@ -127,14 +127,14 @@ If you have more GPUs, FlexGen can combine offloading with pipeline parallelism 
 For example, if you have 2 GPUs but the aggregated GPU memory is less than the model size, you still need offloading. FlexGen allow you to do pipeline parallelism with these 2 GPUs to accelerate the generation.
 See examples [here](https://github.com/FMInference/FlexGen/tree/main/benchmark/flexgen#distributed-gpus).
 
-## Run Chatbot with OPT Models on a Single GPU
-[apps/chatbot.py](apps/chatbot.py) shows how to build a chatbot with FlexGen and OPT models.
+## API Example: Chatbot on a single GPU
+We demonstrate the usage of FlexGen API in [apps/chatbot.py](apps/chatbot.py) by building a chatbot with OPT models.
 While FlexGen is mainly optimized for large-batch throughput-oriented scenarios like dataset evaluations and information extraction,
 FlexGen can also be used for interactive applications like chatbot with better performance than other offloading-based systems.
 Note that FlexGen cannot achieve its best throughput in this single-batch case.
 
-### Default Commands
-You can use the default commands below.
+### Example Commands
+You can use the example commands below.
 If you do not have enough GPU/CPU memory, see the [Handle Out-of-memory](#handle-out-of-memory) section.
 
 ```
@@ -162,6 +162,9 @@ Assistant: Everest.
 Human: I am planning a trip for our anniversary. What things can we do?
 Assistant: Well, there are a number of things you can do for your anniversary. First, you can play cards. Second, you can go for a hike. Third, you can go to a museum.
 ```
+### Generation API
+FlexGen has a generation API following the style of Hugging Face's transformers.
+https://github.com/FMInference/FlexGen/blob/4eac83a32232256f64828afbde90764d9e2f6d70/apps/chatbot.py#L60-L65
 
 ### Handle Out-of-memory
 If you do not have enough GPU/CPU memory, here are a few things you can try.
