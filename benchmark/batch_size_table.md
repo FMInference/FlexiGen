@@ -1,0 +1,20 @@
+## Effective Batch Size of Each System
+
+### Setup
+- Hardware: an NVIDIA T4 (16GB) instance on GCP with 208GB of DRAM and 1.5TB of SSD.  
+- Workload: input sequence length = 512, output sequence length = 32.
+
+### Effective Batch Size
+
+The table below lists the effective batch size of each system.
+The device in the bracket denotes the lowest level of memory hierarchy that the system needs for offloading.
+The batch size is tuned for each system to achieve its maximum throughput with the following principle:
+- Find a level of memory hierarchy that can hold all tensors for generation. Avoid unnecessary offloading to slower storage.
+- Tune the system to use a as large as possible batch size without out-of-memory.
+
+| System | OPT-6.7B | OPT-30B | OPT-175B |
+| ------ | -------- | ------- | -------- |
+| Hugging Face Accelerate  | 2  (gpu) | 8 (cpu)   | 2 (disk)   |
+| DeepSpeed ZeRO-Inference | 16 (cpu) | 4 (cpu)   | 1 (disk)   |
+| FlexGen                  | 2  (gpu) | 144 (cpu) | 256 (disk) |
+| FlexGen with Compression | 72 (gpu) | 512 (cpu) | 144 (cpu)  |
