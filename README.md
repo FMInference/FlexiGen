@@ -36,7 +36,7 @@ FlexGen is mostly optimized for throughput-oriented batch processing settings (e
 - [Benchmark Results](#benchmark-results)
 - [Install](#install)
 - [Get Started with a Single GPU](#get-started-with-a-single-gpu)
-- [API Example: Chatbot on a single GPU](#api-example-chatbot-on-a-single-gpu)
+- [API Example: Chatbot on a Single GPU](#api-example-chatbot-on-a-single-gpu)
 - [Scaling to Distributed GPUs](#scaling-to-distributed-gpus)
 - [Roadmap](#roadmap)
 
