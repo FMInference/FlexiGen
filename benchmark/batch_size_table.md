@@ -26,6 +26,10 @@ We attach the generation throughput here for reference.
 | ------ | -------- | ------- | -------- |
 | Hugging Face Accelerate   | 25.12 | 0.62 | 0.01 |
 | DeepSpeed ZeRO-Inference | 9.28  | 0.60 | 0.01 |
-| Petals\*                 | -     | -    | 0.05 |
 | FlexGen                  | 25.26 | 7.32 | 0.69 |
 | FlexGen with Compression | **29.12** | **8.38** | **1.12** |
+
+### About Petals
+We also include [Petals](https://arxiv.org/abs/2209.01188) as an additional baseline.
+We normalize the throughput reported in the Petals paper (from the case of 14 real servers in Europe and North America) by the number of used GPUs and get an effective per-GPU throughput of 0.68/14 ≈ 0.05 token/s.
+For a more comprehensive comparison with Petals, see Section 6.4 in our paper.
