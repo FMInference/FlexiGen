@@ -1,7 +1,6 @@
 # FlexGen
 
-FlexGen is a high-throughput generation engine for running large language models with limited GPU memory (e.g., a 16GB T4 GPU or a 24GB RTX3090 gaming card!).
-FlexGen allows high-throughput generation by increasing the effective batch size through IO-efficient offloading and compression.
+FlexGen is a high-throughput generation engine for running large language models with limited GPU memory (e.g., a 16GB T4 GPU or a 24GB RTX3090 gaming card!). FlexGen allows high-throughput generation by IO-efficient offloading, compression and large effective batch sizes.
 
 ----------
 
@@ -12,11 +11,11 @@ FlexGen was made possible thanks to a collaboration with
 ----------
 
 The high computational and memory requirements of large language model (LLM) inference traditionally make it feasible only with multiple high-end accelerators.
-FlexGen aims to lower the resource requirements of LLM inference down to a single commodity GPU (e.g., T4, 3090) and allow flexible deployment for various hardware setups. The key technique behind FlexGen is to trade off between **latency** and **throughput** by developing techniques to increase the effective batch size.
+FlexGen aims to lower the resource requirements of LLM inference down to a single commodity GPU (e.g., T4, 3090) and allow flexible deployment for various hardware setups. The key technique behind FlexGen is to trade off between **latency** and **throughput**.
 
 The key features of FlexGen include:  
 
-⚡ **High-Throughput, Large-Batch Offloading**.  
+⚡ **High-Throughput Offloading**.  
 Higher-throughput generation than other offloading-based systems (e.g., Hugging Face Accelerate, DeepSpeed Zero-Inference) - sometimes by orders of magnitude. The key innovation is a new offloading technique that can effectively increase the batch size. This can be useful for batch inference scenarios, such as benchmarking (e.g., [HELM](https://github.com/stanford-crfm/helm)) and [data wrangling](https://arxiv.org/abs/2205.09911).
 
 📦 **Extreme Compression**.  
@@ -27,7 +26,7 @@ Come with a distributed pipeline parallelism runtime to allow scaling if more GP
 
 ❌ **Limitation**.  
 As an offloading-based system running on weak GPUs, FlexGen also has its limitations.
-The throughput of FlexGen is significantly lower than the case when you have enough powerful GPUs to hold the whole model, especially for small-batch cases.
+FlexGen can be significantly slower than the case when you have enough powerful GPUs to hold the whole model, especially for small-batch cases.
 FlexGen is mostly optimized for throughput-oriented batch processing settings (e.g., classifying or extracting information from many documents in batches), on single GPUs.
 
 | [**Read Paper**](docs/paper.pdf) | [**Join Discord**](https://discord.gg/JfphDTkBAh) |
@@ -51,15 +50,14 @@ FlexGen is mostly optimized for throughput-oriented batch processing settings (e
 | FlexGen with Compression | **29.12** | **8.38** | **1.12** |
 
 - Hardware: an NVIDIA T4 (16GB) instance on GCP with 208GB of DRAM and 1.5TB of SSD.  
-- Workload: input sequence length = 512, output sequence length = 32. The batch size is tuned to **a large value** that maximizes the generation throughput for each system. See the batch size [table](benchmark/batch_size_table.md) for more details.
+- Workload: input sequence length = 512, output sequence length = 32. The batch size is tuned to a large value that maximizes the generation throughput for each system. See the batch size [table](benchmark/batch_size_table.md) for more details.
 - Metric: generation throughput (token/s) = number of the generated tokens / (time for processing prompts + time for generation).  
 
 How to [reproduce](benchmark/flexgen).
 
 ### Latency-throughput Trade-off
-Since FlexGen increases throughput by increasing the batch size, it also increases latency - a classic and fundamental trade-off.
 The figure below shows the latency and throughput trade-off of three offloading-based systems on OPT-175B (left) and OPT-30B (right).
-FlexGen achieves higher maximum throughput for both models.
+FlexGen achieves a new Pareto-optimal frontier with significatnly higher maximum throughput for both models.
 Other systems cannot further increase throughput due to out-of-memory.
 "FlexGen(c)" is FlexGen with compression.
 
