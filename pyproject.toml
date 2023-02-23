@@ -18,3 +18,6 @@ classifiers = [
 [project.urls]
 "Homepage" = "https://github.com/FMInference/FlexGen"
 "Bug Tracker" = "https://github.com/FMInference/FlexGen/issues"
+
+[tool.setuptools.packages.find]
+exclude = ["benchmark", "experiments", "playground", "scripts", "third_party"]
