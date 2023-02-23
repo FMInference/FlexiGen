@@ -173,7 +173,7 @@ Assistant: Well, there are a number of things you can do for your anniversary. F
 If you do not have enough GPU/CPU memory, here are a few things you can try.
 They save more memory but run slower.
 
-- Do not pin weights adding `--pin-weight 0`. This can reduce the weight memory usage on CPU by around 20%.
+- Do not pin weights by adding `--pin-weight 0`. This can reduce the weight memory usage on CPU by around 20% or more.
 - Enable weight compression by adding `--compress-weight`. This can reduce the weight memory usage by around 70%.
 - Offload weights to disk by using `--percent 0 0 100 0 100 0`. This requires very little CPU and GPU memory.
 
