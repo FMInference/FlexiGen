@@ -99,6 +99,28 @@ suite_ablation = [
     Case("--model facebook/opt-175b --path _DUMMY_ --percent 0 0 100 0 100 0 --gpu-batch-size 2 --debug fewer_batch"),
 ]
 
+suite_ablation_policy = [
+    # 30B
+    Case("--model facebook/opt-30b --path _DUMMY_ --percent 20 80 0 100 0 100 --gpu-batch-size 48 --num-gpu-batches 3 --cpu --debug fewer_batch"),
+    Case("--model facebook/opt-30b --path _DUMMY_ --percent 0 100 0 100 0 100 --gpu-batch-size 48 --num-gpu-batches 3 --cpu --debug fewer_batch"),
+    Case("--model facebook/opt-30b --path _DUMMY_ --percent 20 80 0 100 0 100 --gpu-batch-size 48 --num-gpu-batches 1 --cpu --debug fewer_batch"),
+    Case("--model facebook/opt-30b --path _DUMMY_ --percent 0 50 0 0 0 100 --gpu-batch-size 32 --num-gpu-batches 8 --cpu --debug fewer_batch"),
+    Case("--model facebook/opt-30b --path _DUMMY_ --percent 0 0 0 0 0 100 --gpu-batch-size 32 --num-gpu-batches 8 --cpu --debug fewer_batch"),
+    Case("--model facebook/opt-30b --path _DUMMY_ --percent 0 50 0 0 0 100 --gpu-batch-size 32 --num-gpu-batches 1 --cpu --debug fewer_batch"),
+    Case("--model facebook/opt-30b --path _DUMMY_ --percent 20 80 100 0 100 0 --gpu-batch-size 1 --num-gpu-batches 1 --cpu --debug fewer_batch"),
+    Case("--model facebook/opt-30b --path _DUMMY_ --percent 0 50 100 0 100 0 --gpu-batch-size 1 --num-gpu-batches 1 --cpu --debug fewer_batch"),
+
+    # 175B
+    Case("--model facebook/opt-175b --path _DUMMY_ --pin-weight 0 --percent 20 80 0 100 0 100 --gpu-batch-size 48 --num-gpu-batches 3 --cpu --debug fewer_batch"),
+    Case("--model facebook/opt-175b --path _DUMMY_ --pin-weight 0 --percent 0 100 0 100 0 100 --gpu-batch-size 48 --num-gpu-batches 3 --cpu --debug fewer_batch"),
+    Case("--model facebook/opt-175b --path _DUMMY_ --pin-weight 0 --percent 20 80 0 100 0 100 --gpu-batch-size 48 --num-gpu-batches 1 --cpu --debug fewer_batch"),
+    Case("--model facebook/opt-175b --path _DUMMY_ --pin-weight 0 --percent 0 50 0 0 0 100 --gpu-batch-size 32 --num-gpu-batches 8 --cpu --debug fewer_batch"),
+    Case("--model facebook/opt-175b --path _DUMMY_ --pin-weight 0 --percent 0 0 0 0 0 100 --gpu-batch-size 32 --num-gpu-batches 8 --cpu --debug fewer_batch"),
+    Case("--model facebook/opt-175b --path _DUMMY_ --pin-weight 0 --percent 0 50 0 0 0 100 --gpu-batch-size 32 --num-gpu-batches 1 --cpu --debug fewer_batch"),
+    Case("--model facebook/opt-175b --path _DUMMY_ --pin-weight 0 --percent 20 80 100 0 100 0 --gpu-batch-size 1 --num-gpu-batches 1 --cpu --debug fewer_batch"),
+    Case("--model facebook/opt-175b --path _DUMMY_ --pin-weight 0 --percent 0 50 100 0 100 0 --gpu-batch-size 1 --num-gpu-batches 1 --cpu --debug fewer_batch"),
+]
+
 suite_175b_breakdown = [
     # seq_len = 512
     Case("--model facebook/opt-175b --path _DUMMY_ --pin-weight 0 --percent 0 50 0 0 0 100 --gpu-batch-size 32 --num-gpu-batches 8 --cpu --debug breakdown"),
@@ -125,6 +147,7 @@ suites = {
     "175b_1x1_comp": suite_175b_1x1_comp,
 
     "ablation": suite_ablation,
+    "ablation_policy": suite_ablation_policy,
     "175b_breakdown": suite_175b_breakdown,
     "175b_stage": suite_175b_stage,
 
