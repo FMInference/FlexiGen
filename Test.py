@@ -1,7 +1,8 @@
 from enum import Enum, auto
-from flexgen.pytorch_backend import DeviceType
-import unittest
+from flexgen.utils import ValueHolder
 
-class MyTestCase(unittest.TestCase):
-	def test_convert(self):
-		self.assertEqual(DeviceType.convert("cuda"), DeviceType.CUDA)
+def test_value():
+    value = ValueHolder(50)
+    value.store(50)
+    assert wallet.val == 50
+		
