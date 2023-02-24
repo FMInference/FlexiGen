@@ -1,6 +1,7 @@
 from enum import Enum, auto
 import unittest
 
-def test_convert():
-	assertEqual(DeviceType.convert("cuda"), DeviceType.CUDA)
+class MyTestCase(unittest.TestCase):
+	def test_convert(self):
+		self.assertEqual(DeviceType.convert("cuda"), DeviceType.CUDA)
 		
