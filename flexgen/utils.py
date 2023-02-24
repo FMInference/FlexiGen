@@ -159,15 +159,15 @@ def torch_mem_stats():
 class ValueHolder:
     def __init__(self):
         self.val = None
+        self.ret = None
 
     def store(self, val):
         assert self.val is None
         self.val = val
 
     def pop(self):
-        ret = self.val
+        self.ret = self.val
         self.val = None
-        return ret
 
     def clear(self):
         self.val = None
