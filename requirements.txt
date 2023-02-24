@@ -1,4 +1,4 @@
-astroid==2.7
+astroid==2.6.5
 autopep8==1.5.7
 click==8.0.3
 colorama==0.4.4
