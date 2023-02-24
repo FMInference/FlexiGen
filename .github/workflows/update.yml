@@ -19,5 +19,5 @@ jobs:
             pip install -r requirements.txt
             
     -  name: Run tests
-       run: pytest flexgen/Test.py
+       run: pytest Test.py
 
