@@ -1,6 +1,5 @@
 from enum import Enum, auto
-from flexgen.flex_opt import TorchDevice
-from flexgen.flex_opt import DeviceType
+from flexgen.pytorch_backend import DeviceType
 import unittest
 
 class MyTestCase(unittest.TestCase):
