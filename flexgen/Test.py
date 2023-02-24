@@ -1,4 +1,5 @@
 from enum import Enum, auto
+from pytorch_backend import DeviceType
 import unittest
 
 class MyTestCase(unittest.TestCase):
