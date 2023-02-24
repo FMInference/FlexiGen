@@ -24,3 +24,8 @@ exclude = ["benchmark", "experiments", "playground", "scripts", "third_party"]
 [tool.poetry.dependencies]
 torch = ">=1.12"
 transformers = ">=4.24"
+numpy = "^1.22.0"
+tqdm = "^4.64.0"
+pulp = "^2.7.0"
+attrs = "^22.1.0"
+
