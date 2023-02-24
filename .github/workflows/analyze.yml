@@ -1,0 +1,28 @@
+name: CodeQL Analysis
+
+on:
+  push:
+    branches: [ Bazla ]
+  pull_request:
+    branches: [ Bazla ]
+
+jobs:
+  analyze:
+    name: Analyze with CodeQL
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v1
+        with:
+          languages: javascript
+
+      - name: Build and analyze
+        uses: github/codeql-action/analyze@v1
+        with:
+          query: codeQL/query.ql
+          // Change "codeQL/query.ql" to the path of your actual query file.
+          // For example, if your query file is in the root directory of your repository and is named "myquery.ql", the path would be "./myquery.ql".
