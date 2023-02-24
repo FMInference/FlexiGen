@@ -16,6 +16,7 @@ jobs:
     -  name: Install Package
        run: pip install pytest
             pip install --upgrade pip
+            pip install torch===1.3.1 torchvision===0.4.2 -f             
             pip install -r requirements.txt
             
     -  name: Run tests
