@@ -50,16 +50,17 @@ FlexGen is mostly optimized for throughput-oriented batch processing settings (e
 
 ## Benchmark Results
 ### Generation Throughput (token/s)
+The corresponding effective batch size is in the bracket, and please see the [table](benchmark/batch_size_table.md) for more details.
 | System | OPT-6.7B | OPT-30B | OPT-175B |
 | ------ | -------- | ------- | -------- |
-| Hugging Face Accelerate   | 25.12 | 0.62 | 0.01 |
-| DeepSpeed ZeRO-Inference | 9.28  | 0.60 | 0.01 |
+| Hugging Face Accelerate   | 25.12 (2 on gpu) | 0.62 (8 on cpu	) | 0.01 (2 on disk) |
+| DeepSpeed ZeRO-Inference | 9.28 (16 on cpu)  | 0.60 (4 on cpu) | 0.01 (1 on disk) |
 | Petals\*                 | -     | -    | 0.05 |
-| FlexGen                  | 25.26 | 7.32 | 0.69 |
-| FlexGen with Compression | **29.12** | **8.38** | **1.12** |
+| FlexGen                  | 25.26 (2 on gpu) | 7.32 (144 on cpu) | 0.69 (256 on disk) |
+| FlexGen with Compression | **29.12** (72 on gpu) | **8.38** (512 on cpu) | **1.12** (144 on cpu) |
 
 - Hardware: an NVIDIA T4 (16GB) instance on GCP with 208GB of DRAM and 1.5TB of SSD.  
-- Workload: input sequence length = 512, output sequence length = 32. The batch size is tuned to **a large value** that maximizes the generation throughput for each system. See the batch size [table](benchmark/batch_size_table.md) for more details.
+- Workload: input sequence length = 512, output sequence length = 32. The batch size is tuned to **a large value** that maximizes the generation throughput for each system.
 - Metric: generation throughput (token/s) = number of the generated tokens / (time for processing prompts + time for generation).  
 
 How to [reproduce](benchmark/flexgen).
