@@ -4,7 +4,7 @@ FlexGen is a high-throughput generation engine for running large language models
 
 ## Recent Changes
 Thanks to early feedback about this project, we realized that early versions of this README and our paper were a bit unclear about the purpose of FlexGen and why we're excited about it.
-**This is a preliminary effort on lowering the resource requirement of LLMs, but it also has a lot of limitations.**
+**This is a preliminary effort to lower the resource requirements of LLMs, but it also has a lot of limitations and does not aim to replace use cases when sufficient resources are available.**
 Our primary contributions are increasing throughput on single GPU instances - by effectively increasing the batch size.
 We're really excited about our techniques for offloading and automatically searching through the design space, as well as our results that suggest it's possible to go down to 4-bit quantization without hurting accuracy.
 This naturally trades off latency, but we think it's a really interesting direction for future work.
