@@ -2,7 +2,13 @@
 
 FlexGen is a high-throughput generation engine for running large language models with limited GPU memory (e.g., a 16GB T4 GPU or a 24GB RTX3090 gaming card!). FlexGen allows high-throughput generation by IO-efficient offloading, compression and large effective batch sizes.
 
-**See [Recent Changes](#recent-changes).**
+## Recent Changes
+Thanks to early feedback about this project, we realized that early versions of this README and our paper were a bit unclear about the purpose of FlexGen and why we're excited about it.
+**This is a preliminary effort on lowering the resource requirement of LLMs, but it also has a lot of limitations.**
+Our primary contributions are increasing throughput on single GPU instances - by effectively increasing the batch size.
+We're really excited about our techniques for offloading and automatically searching through the design space, as well as our results that suggest it's possible to go down to 4-bit quantization without hurting accuracy.
+This naturally trades off latency, but we think it's a really interesting direction for future work.
+We'd like to thank everyone for their feedback - keep it coming!
 
 ----------
 
@@ -34,21 +40,12 @@ FlexGen is mostly optimized for throughput-oriented batch processing settings (e
 [**Join Discord**](https://discord.gg/JfphDTkBAh)
 
 ## Content
-- [Recent Changes](#recent-changes)
 - [Benchmark Results](#benchmark-results)
 - [Install](#install)
 - [Get Started with a Single GPU](#get-started-with-a-single-gpu)
 - [API Example](#api-example)
 - [Scaling to Distributed GPUs](#scaling-to-distributed-gpus)
 - [Roadmap](#roadmap)
-
-## Recent Changes
-Thanks to early feedback about this project, we realized that early versions of this README and our paper were a bit unclear about the purpose of FlexGen and why we're excited about it.
-**This is a preliminary effort on lowering the resource requirement of LLMs, but it also has a lot of limitations.**
-Our primary contributions are increasing throughput on single GPU instances - by effectively increasing the batch size.
-We're really excited about our techniques for offloading and automatically searching through the design space, as well as our results that suggest it's possible to go down to 4-bit quantization without hurting accuracy.
-This naturally trades off latency, but we think it's a really interesting direction for future work.
-We'd like to thank everyone for their feedback - keep it coming!
 
 ## Benchmark Results
 ### Generation Throughput (token/s)
