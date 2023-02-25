@@ -127,9 +127,31 @@ See examples [here](https://github.com/FMInference/FlexGen/tree/main/benchmark/f
 
 ## API Example
 We demonstrate the usage of FlexGen API in [apps/completion.py](apps/completion.py).
+This example shows how to run generation for two sentences.
+To get the best throughput out of FlexGen, you typically need to batch more sentences.
 
 ### Generation API
 FlexGen has a generation API following the style of Hugging Face's transformers.
+https://github.com/FMInference/FlexGen/blob/0af54017fc0ea0f2599339ffe782ba5af98fa920/apps/completion.py#L58-L62
+
+### Example Commands
+You can use the example commands below.
+If you do not have enough GPU/CPU memory, see the [Handle Out-of-memory](#handle-out-of-memory) section.
+
+```
+# Complete with OPT-6.7B. You need at least 15GB of GPU memory.
+python3 completion.py --model facebook/opt-6.7b
+```
+
+```
+# Complete with OPT-30B. You need about 90GB of CPU memory.
+python3 completion.py --model facebook/opt-30b --percent 0 100 100 0 100 0
+```
+
+```
+# Complete with instruction-tuned OPT-IML-MAX-30B. You need about 90GB of CPU memory.
+python3 completion.py --model facebook/opt-iml-max-30b --percent 0 100 100 0 100 0
+```
 
 ### Handle Out-of-memory
 If you do not have enough GPU/CPU memory, here are a few things you can try.
@@ -145,7 +167,6 @@ We plan to work on the following features. Community contributions are welcome.
 - [ ] Support Apple silicon M1/M2 deployment
 - [ ] Support Colab deployment
 - [ ] Add a text summarization application and more throughput-oriented applications.
-- [ ] Optimize the latency of the chatbot application
 - [ ] Support more models (BLOOM, CodeGen, GLM)
 - [ ] Release the cost model and policy optimizer
 - [ ] Release a pip installable package

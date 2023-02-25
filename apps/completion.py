@@ -1,4 +1,4 @@
-"""Run a chatbot with FlexGen and OPT models."""
+"""Complete sentences with FlexGen and OPT models."""
 import argparse
 
 from transformers import AutoTokenizer
