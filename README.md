@@ -1,9 +1,10 @@
-# FlexGen
+# FlexGen (Still Working in Progress!)
 
-FlexGen is a high-throughput generation engine for running large language models with limited GPU memory (e.g., a 16GB T4 GPU or a 24GB RTX3090 gaming card!). FlexGen allows high-throughput generation by IO-efficient offloading, compression and large effective batch sizes.
+FlexGen is a high-throughput generation engine for running large language models with limited GPU memory (e.g., a 16GB T4 GPU or a 24GB RTX3090 gaming card!). FlexGen allows **high-throughput** generation by IO-efficient offloading, compression and **large effective batch sizes**.
 
-## Recent Changes
-Thanks to early feedback about this project, we realized that early versions of this README and our paper were a bit unclear about the purpose of FlexGen and why we're excited about it.
+## Recent Changes (It is getting better thanks to you🙏)
+We are glad the public has been really excited about FlexGen. However, our work (repo&paper) is still under preparation and not ready for public release / announcement yet.
+Thanks to early feedback about this project, we realized that early versions of this README and our paper were a bit unclear about the purpose of FlexGen.
 **This is a preliminary effort to lower the resource requirements of LLMs, but it also has a lot of limitations and does not aim to replace use cases when sufficient resources are available.**
 Our primary contributions are increasing throughput on single GPU instances - by effectively increasing the batch size.
 We're really excited about our techniques for offloading and automatically searching through the design space, as well as our results that suggest it's possible to go down to 4-bit quantization without hurting accuracy.
