@@ -29,7 +29,7 @@ As an offloading-based system running on weak GPUs, FlexGen also has its limitat
 FlexGen can be significantly slower than the case when you have enough powerful GPUs to hold the whole model, especially for small-batch cases.
 FlexGen is mostly optimized for throughput-oriented batch processing settings (e.g., classifying or extracting information from many documents in batches), on single GPUs.
 
-| [**Read Paper**](docs/paper.pdf) | [**Join Discord**](https://discord.gg/JfphDTkBAh) |
+| [**Read Paper**](docs/paper.md) | [**Join Discord**](https://discord.gg/JfphDTkBAh) |
 
 ## Content
 - [Benchmark Results](#benchmark-results)
@@ -50,7 +50,7 @@ FlexGen is mostly optimized for throughput-oriented batch processing settings (e
 | FlexGen with Compression | **29.12** | **8.38** | **1.12** |
 
 - Hardware: an NVIDIA T4 (16GB) instance on GCP with 208GB of DRAM and 1.5TB of SSD.  
-- Workload: input sequence length = 512, output sequence length = 32. The batch size is tuned to a large value that maximizes the generation throughput for each system. See the batch size [table](benchmark/batch_size_table.md) for more details.
+- Workload: input sequence length = 512, output sequence length = 32. The batch size is tuned to **a large value** that maximizes the generation throughput for each system. See the batch size [table](benchmark/batch_size_table.md) for more details.
 - Metric: generation throughput (token/s) = number of the generated tokens / (time for processing prompts + time for generation).  
 
 How to [reproduce](benchmark/flexgen).
@@ -72,7 +72,7 @@ FlexGen utilizes a block schedule to reuse weight and overlap I/O with computati
 
 <img src="https://github.com/FMInference/FlexGen/raw/main/docs/block_schedule.jpg" alt="logo" width="500"></img>
 
-More details can be found in [our paper](docs/paper.pdf).
+More details can be found in [our paper](docs/paper.md).
 
 ## Install
 Requirements:  
