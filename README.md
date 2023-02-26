@@ -131,6 +131,13 @@ You can then try to offloading all weights to disk by
 python3 -m flexgen.flex_opt --model facebook/opt-175b --percent 0 0 100 0 100 0 --offload-dir YOUR_SSD_FOLDER
 ```
 
+### CPU and M1/M2 GPU platform
+To run models on CPU platforms, all you need to do is to add an `--platform` entry:
+```
+python3 -m flexgen.flex_opt --model facebook/opt-1.3b --platform cpu
+```
+To run on M1/M2 platforms, [PyTorch nightly](https://pytorch.org/) is required for kernel coverage and better performance. Once you have PyTorch nightly installed, you can simply replace `cpu` with `mps:0`.
+
 ### How to set the offloading strategy and `--percent`?
 We will release an automatic policy optimizer later, but now you have to manually try a few strategies.
 The idea of high-throughput generation is to offload parameters and attention cache as much as possible to the CPU and disk if necessary.
@@ -191,7 +198,7 @@ See [flexgen/apps](flexgen/apps) for more example applications.
 ## Roadmap
 We plan to work on the following features. Community contributions are welcome.
 
-- [ ] Support Apple silicon M1/M2 deployment
+- [x] Support Apple silicon M1/M2 deployment
 - [ ] Support Colab deployment
 - [ ] Support more models (BLOOM, CodeGen, GLM)
 - [ ] Release the cost model and policy optimizer
