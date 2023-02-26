@@ -2,16 +2,13 @@
 import argparse
 
 from transformers import AutoTokenizer
-from flexgen.flex_opt import (Policy, OptLM, TorchDevice, TorchDisk, TorchMixedDevice,
-    CompressionConfig, Env, Task, get_opt_config, str2bool)
+from flexgen.flex_opt import (Policy, OptLM, ExecutionEnv, CompressionConfig,
+        str2bool)
 
 
 def main(args):
     # Initialize environment
-    gpu = TorchDevice("cuda:0")
-    cpu = TorchDevice("cpu")
-    disk = TorchDisk(args.offload_dir)
-    env = Env(gpu=gpu, cpu=cpu, disk=disk, mixed=TorchMixedDevice([gpu, cpu, disk]))
+    env = ExecutionEnv.create(args.offload_dir)
 
     # Offloading policy
     policy = Policy(1, 1,
@@ -30,14 +27,12 @@ def main(args):
                         group_dim=2, symmetric=False))
 
     # Model
+    print("Initialize...")
     tokenizer = AutoTokenizer.from_pretrained("facebook/opt-30b", padding_side="left")
     tokenizer.add_bos_token = False
     stop = tokenizer("\n").input_ids[0]
 
-    print("Initialize...")
-    opt_config = get_opt_config(args.model)
-    model = OptLM(opt_config, env, args.path, policy)
-    model.init_all_weights()
+    model = OptLM(args.model, env, args.path, policy)
 
     context = (
         "A chat between a curious human and a knowledgeable artificial intelligence assistant.\n"
@@ -74,11 +69,10 @@ def main(args):
         print(outputs[len(context):], end="")
         context = outputs
 
-    # TODO: optimize the performance by reducing redundant computation.
+    # TODO: optimize the performance by reusing context cache and reducing redundant computation.
 
     # Shutdown
-    model.delete_all_weights()
-    disk.close_copy_threads()
+    env.close_copy_threads()
 
 
 if __name__ == "__main__":

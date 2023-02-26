@@ -1,3 +1,4 @@
+"""Implement tensor computations with pytorch."""
 from enum import Enum, auto
 from functools import partial
 from itertools import count

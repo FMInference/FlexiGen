@@ -2,8 +2,8 @@
 import argparse
 
 from transformers import AutoTokenizer
-from flexgen.flex_opt import (Policy, OptLM, TorchDevice, TorchDisk, TorchMixedDevice,
-    CompressionConfig, Env, Task, get_opt_config, str2bool)
+from flexgen.flex_opt import (Policy, OptLM, ExecutionEnv, CompressionConfig,
+        str2bool)
 
 
 def main(args):
@@ -22,10 +22,7 @@ def main(args):
     ]
 
     # Initialize environment
-    gpu = TorchDevice("cuda:0")
-    cpu = TorchDevice("cpu")
-    disk = TorchDisk(args.offload_dir)
-    env = Env(gpu=gpu, cpu=cpu, disk=disk, mixed=TorchMixedDevice([gpu, cpu, disk]))
+    env = ExecutionEnv.create(args.offload_dir)
 
     # Offloading policy
     policy = Policy(len(prompts), 1,
@@ -49,9 +46,7 @@ def main(args):
     tokenizer.add_bos_token = False
     stop = tokenizer("\n").input_ids[0]
 
-    opt_config = get_opt_config(args.model)
-    model = OptLM(opt_config, env, args.path, policy)
-    model.init_all_weights()
+    model = OptLM(args.model, env, args.path, policy)
 
     # Generate
     inputs = tokenizer(prompts, padding="max_length", max_length=128)
@@ -59,17 +54,16 @@ def main(args):
         inputs.input_ids,
         do_sample=True,
         temperature=0.7,
-        max_new_tokens=32)
+        max_new_tokens=32,
+        stop=stop)
     outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)
-    show_str = "Outputs:\n" + 70 * '-' + "\n"
+    print("Outputs:\n" + 70 * '-')
     for i in [0, len(outputs)-1]:
-        show_str += f"{i}: {outputs[i]}\n"
-        show_str += "-" * 70 + "\n"
-    print(show_str)
+        print(f"{i}: {outputs[i]}")
+        print("-" * 70)
 
     # Shutdown
-    model.delete_all_weights()
-    disk.close_copy_threads()
+    env.close_copy_threads()
 
 
 if __name__ == "__main__":

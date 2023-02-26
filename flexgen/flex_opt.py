@@ -20,7 +20,7 @@ from flexgen.opt_config import OptConfig, get_opt_config, download_opt_weights
 from flexgen.pytorch_backend import (TorchDevice, TorchDisk, TorchLink,
     TorchMixedDevice, DeviceType, general_copy, fix_recursive_import)
 from flexgen.timer import timers
-from flexgen.utils import (Task, Env, GB, T, ValueHolder,
+from flexgen.utils import (Task, ExecutionEnv, GB, T, ValueHolder,
     array_1d, array_2d, array_3d, str2bool, project_decode_latency,
     torch_mem_stats, torch_dtype_to_np_dtype, write_benchmark_log,
     read_benchmark_log)
@@ -580,7 +580,13 @@ class TransformerLayer:
 
 
 class OptLM:
-    def __init__(self, config, env, path, policy):
+    def __init__(self,
+                 config: Union[str, OptConfig],
+                 env: ExecutionEnv,
+                 path: str,
+                 policy: Policy):
+        if isinstance(config, str):
+            config = get_opt_config(config)
         self.config = config
         self.env = env
         self.path = path
@@ -628,6 +634,8 @@ class OptLM:
         self.attention_mask = array_1d(num_gpu_batches, ValueHolder)
 
         self.task = None
+
+        self.init_all_weights()
 
     def set_task(self, task):
         self.task = task
@@ -762,7 +770,9 @@ class OptLM:
             left, right = k * gpu_batch_size, (k + 1) * gpu_batch_size
             ids = self.hidden[i][j][k].pop().data.detach().cpu().numpy()
             pos = self.task.prompt_len + i
-            self.output_ids[left:right, pos:pos+1] = ids
+            self.output_ids[left:right, pos:pos+1] = np.where(
+                self.stopped, self.config.pad_token_id, ids)
+            self.stopped = np.logical_or(self.stopped, ids == self.task.stop)
         else:  # move to home
             x = self.hidden[i][j][k]
             if x.val:  # x may already be moved due to overlapping
@@ -835,7 +845,9 @@ class OptLM:
         self.execute_gen_len = task.cut_gen_len if task.cut_gen_len else task.gen_len
 
         # Output token ids
-        self.output_ids = np.ones((len(task.inputs), prompt_len + gen_len), dtype=np.int32)
+        self.output_ids = np.full((len(task.inputs), prompt_len + gen_len),
+            self.config.pad_token_id, dtype=np.int32)
+        self.stopped = np.zeros((len(task.inputs), 1), dtype=bool)
         self.output_ids[:, :prompt_len] = np.asarray(task.inputs)
         assert gpu_batch_size * num_gpu_batches == len(task.inputs)
 
@@ -1013,7 +1025,7 @@ class OptLM:
                 self.sync()
             timers("generate").stop()
 
-            if self.output_ids[0, self.task.prompt_len + i] == self.task.stop:
+            if np.all(self.stopped):
                 break
 
     def generation_loop_overlap_multi_batch(self):
@@ -1129,6 +1141,9 @@ class OptLM:
                 timers("generate").costs.append(timers("prefill").costs[0])
             else:
                 timers("generate").costs.append(self.num_layers * batch_cost)
+
+    def __del__(self):
+        self.delete_all_weights()
 
 
 def get_filename(args):
