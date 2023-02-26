@@ -50,7 +50,7 @@ FlexGen is mostly optimized for throughput-oriented batch processing settings (e
 
 ## Benchmark Results
 ### Generation Throughput (token/s)
-The corresponding effective batch size is in the bracket, and please see [here](benchmark/batch_size_table.md) for more details.
+The corresponding effective batch size is in the bracket. Please see [here](benchmark/batch_size_table.md) for more details.
 | System | OPT-6.7B | OPT-30B | OPT-175B |
 | ------ | -------- | ------- | -------- |
 | Hugging Face Accelerate   | 25.12 (2 on gpu) | 0.62 (8 on cpu	) | 0.01 (2 on disk) |
@@ -148,7 +148,7 @@ To get the best throughput out of FlexGen, you typically need to batch more sent
 
 ### Generation API
 FlexGen has a generation API following the style of Hugging Face's transformers.
-https://github.com/FMInference/FlexGen/blob/0af54017fc0ea0f2599339ffe782ba5af98fa920/apps/completion.py#L58-L62
+https://github.com/FMInference/FlexGen/blob/cf90920349109205378e5253fd5e8da4fa2740c1/apps/completion.py#L53-L58
 
 ### Example Commands
 You can use the example commands below.
