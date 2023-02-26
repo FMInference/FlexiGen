@@ -142,13 +142,20 @@ For example, if you have 2 GPUs but the aggregated GPU memory is less than the m
 See examples [here](https://github.com/FMInference/FlexGen/tree/main/benchmark/flexgen#distributed-gpus).
 
 ## API Example
-We demonstrate the usage of FlexGen API in [apps/completion.py](apps/completion.py).
+We demonstrate the usage of FlexGen API in [completion.py](flexgen/apps/completion.py).
 This example shows how to run generation for two sentences.
 To get the best throughput out of FlexGen, you typically need to batch more sentences.
 
 ### Generation API
 FlexGen has a generation API following the style of Hugging Face's transformers.
-https://github.com/FMInference/FlexGen/blob/cf90920349109205378e5253fd5e8da4fa2740c1/apps/completion.py#L53-L58
+```python
+output_ids = model.generate(
+	input_ids,
+	do_sample=True,
+	temperature=0.7,
+	max_new_tokens=32,
+	stop=stop)
+```
 
 ### Example Commands
 You can use the example commands below.
@@ -156,17 +163,17 @@ If you do not have enough GPU/CPU memory, see the [Handle Out-of-memory](#handle
 
 ```
 # Complete with OPT-6.7B. You need at least 15GB of GPU memory.
-python3 completion.py --model facebook/opt-6.7b
+python3 -m flexgen.apps.completion --model facebook/opt-6.7b
 ```
 
 ```
 # Complete with OPT-30B. You need about 90GB of CPU memory.
-python3 completion.py --model facebook/opt-30b --percent 0 100 100 0 100 0
+python3 -m flexgen.apps.completion --model facebook/opt-30b --percent 0 100 100 0 100 0
 ```
 
 ```
 # Complete with instruction-tuned OPT-IML-MAX-30B. You need about 90GB of CPU memory.
-python3 completion.py --model facebook/opt-iml-max-30b --percent 0 100 100 0 100 0
+python3 -m flexgen.apps.completion --model facebook/opt-iml-max-30b --percent 0 100 100 0 100 0
 ```
 
 ### Handle Out-of-memory
@@ -175,7 +182,7 @@ They save more memory but run slower.
 
 - Do not pin weights by adding `--pin-weight 0`. This can reduce the weight memory usage on CPU by around 20% or more.
 - Enable weight compression by adding `--compress-weight`. This can reduce the weight memory usage by around 70%.
-- Offload weights to disk by using `--percent 0 0 100 0 100 0`. This requires very little CPU and GPU memory.
+- Offload all weights to disk by using `--percent 0 0 100 0 100 0`. This requires very little CPU and GPU memory.
 
 ## Roadmap
 We plan to work on the following features. Community contributions are welcome.
