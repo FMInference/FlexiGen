@@ -32,6 +32,10 @@ def fix_recursive_import():
 class DeviceType(Enum):
     CPU = auto()
     CUDA = auto()
+    # Metal Performance Shaders (MPS) for Mac platforms
+    MPS = auto()
+    # Heterogeneous Interface for Portability (HIP) for AMD platforms
+    HIP = auto()
     DISK = auto()
     MIXED = auto()
     COMPRESSED = auto()
@@ -42,6 +46,10 @@ class DeviceType(Enum):
             return DeviceType.CPU
         elif name == "cuda":
             return DeviceType.CUDA
+        elif name == "mps":
+            return DeviceType.MPS
+        elif name == "hip":
+            return DeviceType.HIP
         elif name == "disk":
             return DeviceType.DISK
         elif name == "mixed":
@@ -182,8 +190,9 @@ class TorchDevice:
         self.links[dst] = link
 
     def allocate(self, shape, dtype, pin_memory=None, name=None):
+        # set default pin_memory to be False
         if self.device_type == DeviceType.CPU:
-            pin_memory = True if pin_memory is None else pin_memory
+            pin_memory = False if pin_memory is None else pin_memory
         else:
             pin_memory = False
         dtype = np_dtype_to_torch_dtype[dtype]
@@ -270,7 +279,13 @@ class TorchDevice:
 
         b, s, h = inputs.shape
 
-        hidden = F.layer_norm(inputs.data, (h,), weight=w_ln.data, bias=b_ln.data)
+        # workaround for PyTorch MPS bug of varianceEps implementation
+        if self.device_type == DeviceType.MPS:
+            hidden = F.layer_norm(inputs.data.type(torch.float32), (h,), weight=w_ln.data.type(torch.float32), bias=b_ln.data.type(torch.float32))
+            hidden = hidden.type(torch.float16)
+        else:
+            hidden = F.layer_norm(inputs.data, (h,), weight=w_ln.data, bias=b_ln.data)
+
         if donate[0]: inputs.delete()
 
         # output embedding
@@ -291,8 +306,9 @@ class TorchDevice:
         shape = (prompt_len + gen_len - 1, gpu_batch_size * num_head, hidden_size // num_head)
         # NOTE: disable pin_memory due to high memory overhead
         pin_memory = False
-        k_cache = self.allocate(shape, np.float16, pin_memory=pin_memory)
-        v_cache = self.allocate(shape, np.float16, pin_memory=pin_memory)
+
+        k_cache = self.allocate(shape, np.float32 if policy.only_cpu else np.float16, pin_memory=pin_memory)
+        v_cache = self.allocate(shape, np.float32 if policy.only_cpu else np.float16, pin_memory=pin_memory)
         return k_cache, v_cache
 
     def mha(self, inputs, attention_mask, w_q, b_q, w_k, b_k, w_v, b_v,
@@ -309,7 +325,13 @@ class TorchDevice:
         head_dim = h // n_head
         scaling = head_dim ** -0.5
 
-        hidden = F.layer_norm(inputs.data, (h,), weight=w_ln.data, bias=b_ln.data)
+        # workaround for PyTorch MPS bug of varianceEps implementation
+        if self.device_type == DeviceType.MPS:
+            # hidden = F.layer_norm(inputs.data, (h,), weight=w_ln.data, bias=b_ln.data, eps=torch.tensor([1e-05]).type(torch.float16))
+            hidden = F.layer_norm(inputs.data.type(torch.float32), (h,), weight=w_ln.data.type(torch.float32), bias=b_ln.data.type(torch.float32))
+            hidden = hidden.type(torch.float16)
+        else:
+            hidden = F.layer_norm(inputs.data, (h,), weight=w_ln.data, bias=b_ln.data)
 
         # shape: (b, s, h)
         q = F.linear(hidden, w_q.data, bias=b_q.data) * scaling
@@ -380,7 +402,12 @@ class TorchDevice:
         head_dim = h // n_head
         scaling = head_dim ** -0.5
 
-        hidden = F.layer_norm(inputs.data, (h,), weight=w_ln.data, bias=b_ln.data)
+        # workaround for PyTorch MPS bug of varianceEps implementation
+        if self.device_type == DeviceType.MPS:
+            hidden = F.layer_norm(inputs.data.type(torch.float32), (h,), weight=w_ln.data.type(torch.float32), bias=b_ln.data.type(torch.float32))
+            hidden = hidden.type(torch.float16)
+        else:
+            hidden = F.layer_norm(inputs.data, (h,), weight=w_ln.data, bias=b_ln.data)
 
         # shape: (b, 1, h)
         q = F.linear(hidden, w_q.data, bias=b_q.data) * scaling
@@ -416,14 +443,15 @@ class TorchDevice:
                 # shape: (b * n_head, s, head_dim)
                 v = v.permute(1, 0, 2).reshape(b * n_head, src_s, head_dim)
 
-                if k.is_cuda:
-                    value = self._attention_value(q, k, v, attention_mask.data,
-                        b, src_s, tgt_s, n_head, head_dim)
-                else:
+                if self.device_type == DeviceType.CUDA and not k.is_cuda:
                     q = q.float().cpu()
                     k, v = k.float(), v.float()
                     value = self._attention_value(q, k, v, attention_mask.data,
                         b, src_s, tgt_s, n_head, head_dim).cuda().half()
+                else:
+                    value = self._attention_value(q, k, v, attention_mask.data,
+                        b, src_s, tgt_s, n_head, head_dim)
+
             else:  # Sparse attention
                 # shape: (s, b * n_head, head_dim)
                 k = k_cache.data[:src_s]
@@ -431,15 +459,15 @@ class TorchDevice:
                 # shape: (b * n_head, head_dim, s)
                 k = k.permute(1, 2, 0).reshape(b * n_head, head_dim, src_s)
 
-                if k.is_cuda:
-                    value = self._sparse_attention_value(q, k, v_new, v_cache,
-                        attention_mask.data, b, src_s, tgt_s, n_head, head_dim,
-                        attn_sparsity)
-                else:
+                if self.device_type == DeviceType.CUDA and not k.is_cuda:
                     q = q.float().cpu()
                     value = self._sparse_attention_value(q, k, v_new, v_cache,
                         attention_mask.data, b, src_s, tgt_s, n_head, head_dim,
                         attn_sparsity).cuda().half()
+                else:
+                    value = self._sparse_attention_value(q, k, v_new, v_cache,
+                        attention_mask.data, b, src_s, tgt_s, n_head, head_dim,
+                        attn_sparsity)
         else:  # Mixed device attention
             assert attn_sparsity >= 1.0
             value = self._mixed_device_attention(q, k_cache, v_cache,
@@ -498,12 +526,12 @@ class TorchDevice:
         attn_weights = torch.cat([topk_weights,
             attn_weights[:, :, -1].unsqueeze(-1)], dim=-1)
 
-        if k.is_cuda:
+        if self.device_type == DeviceType.CUDA and not k.is_cuda:
+            (v_home, v_buf) = v_cache
+        else:
             v_home = v_cache
             v_buf = self.allocate((topk+1, b*n_head, head_dim), np.float16)
             topk_indices = topk_indices.cpu()
-        else:
-            (v_home, v_buf) = v_cache
 
         # shape: (s, b * n_head, head_dim)
         indices_src = topk_indices
@@ -574,7 +602,13 @@ class TorchDevice:
 
         b, s, h = inputs.shape
 
-        out = F.layer_norm(inputs.data, (h,), weight=w_ln.data, bias=b_ln.data)
+        # workaround for PyTorch MPS bug of varianceEps implementation
+        if self.device_type == DeviceType.MPS:
+            out = F.layer_norm(inputs.data.type(torch.float32), (h,), weight=w_ln.data.type(torch.float32), bias=b_ln.data.type(torch.float32))
+            out = out.type(torch.float16)
+        else:
+            out = F.layer_norm(inputs.data, (h,), weight=w_ln.data, bias=b_ln.data)
+
         out = F.linear(out, wi.data, bias=bi.data)
         F.relu(out, inplace=True)
         out = F.linear(out, wo.data, bias=bo.data)
@@ -590,7 +624,7 @@ class TorchDevice:
         if self.device_type == DeviceType.CUDA:
             cur_mem = torch.cuda.memory_allocated(self.dev)
             peak_mem = torch.cuda.max_memory_allocated(self.dev)
-        elif self.device_type == DeviceType.CPU:
+        elif self.device_type in [DeviceType.MPS, DeviceType.CPU]:
             cur_mem = cpu_mem_stats()
             peak_mem = 0
         else:
@@ -599,7 +633,8 @@ class TorchDevice:
         return cur_mem, peak_mem
 
     def print_stats(self, output_file=None):
-        torch.cuda.synchronize()
+        if self.device_type == DeviceType.CUDA:
+            torch.cuda.synchronize()
         cur_mem, peak_mem = self.mem_stats()
 
         if output_file is not None:
@@ -621,7 +656,7 @@ class TorchDevice:
 class TorchDisk:
     """Manage tensors stored on a disk."""
 
-    def __init__(self, path, mem_capacity=None, cuda_id=0, num_copy_threads=4):
+    def __init__(self, path, mem_capacity=None, platform="cuda", device_id=0, num_copy_threads=4):
         self.name = path
         self.path = os.path.abspath(os.path.expanduser(path))
         self.mem_capacity = mem_capacity
@@ -640,7 +675,7 @@ class TorchDisk:
         self.copy_queue = queue.Queue()
         self.copy_threads = [
             threading.Thread(
-                target=copy_worker_func, args=(self.copy_queue, cuda_id)
+                target=copy_worker_func, args=(self.copy_queue, platform, device_id)
             ) for _ in range(num_copy_threads)
         ]
         for t in self.copy_threads:
@@ -875,32 +910,33 @@ def map_to_torch_tensor(tensor, indices):
     return data[indices] if indices else data
 
 
-def copy_worker_func(queue, cuda_id):
+def copy_worker_func(queue, platform, device_id):
     """The copy worker thread."""
-    torch.cuda.set_device(cuda_id)
 
-    cpu_buf = torch.empty((1 * GB,), dtype=torch.float16, pin_memory=True)
-    copy_stream = torch.cuda.Stream()
+    if "cuda" in platform:
+        torch.cuda.set_device(device_id)
+        copy_stream = torch.cuda.Stream()
+        cpu_buf = torch.empty((1 * GB,), dtype=torch.float16, pin_memory=True)
 
-    with torch.cuda.stream(copy_stream):
-        while True:
-            item = queue.get()
-            if item is None:
-                queue.task_done()
-                return
+    while True:
+        item = queue.get()
+        if item is None:
+            queue.task_done()
+            return
 
-            dst, dst_indices, src, src_indices = item
-            src_data = map_to_torch_tensor(src, src_indices)
-            dst_data = map_to_torch_tensor(dst, dst_indices)
+        dst, dst_indices, src, src_indices = item
+        src_data = map_to_torch_tensor(src, src_indices)
+        dst_data = map_to_torch_tensor(dst, dst_indices)
 
-            if (src.device.device_type == DeviceType.CUDA or
-                dst.device.device_type == DeviceType.CUDA):
+        if (src.device.device_type == DeviceType.CUDA or
+            dst.device.device_type == DeviceType.CUDA):
+            with torch.cuda.stream(copy_stream):
                 # Use a pinned cpu buffer as a relay
                 size = np.prod(src_data.shape)
                 tmp_cpu_buf = cpu_buf[:size].view(src_data.shape)
                 tmp_cpu_buf.copy_(src_data)
                 dst_data.copy_(tmp_cpu_buf)
-            else:
-                dst_data.copy_(src_data)
+        else:
+            dst_data.copy_(src_data)
 
-            queue.task_done()
+        queue.task_done()
