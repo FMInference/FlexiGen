@@ -20,7 +20,7 @@ from flexgen.opt_config import get_opt_config
 from flexgen.pytorch_backend import (TorchDevice, TorchDisk, TorchLink,
     TorchMixedDevice, TorchTensor)
 from flexgen.timer import timers
-from flexgen.utils import (Task, Env, GB, T, ValueHolder,
+from flexgen.utils import (Task, ExecutionEnv, GB, T, ValueHolder,
     array_1d, array_2d, array_3d, array_4d, str2bool, project_decode_latency)
 
 
@@ -82,6 +82,7 @@ class DistOptLM(OptLM):
         self.store_cache_stream = torch.cuda.Stream()
 
         self.task = None
+        self.init_all_weights()
 
     def load_weight(self, b, t, i, j, k):
         # Handle corner cases
@@ -306,6 +307,7 @@ class DistOptLM(OptLM):
             temperature=temperature,
             stop=stop,
         )
+        assert stop is None, "Not implemented."
         num_pipeline_stages = self.num_pipeline_stages
         num_layers = self.num_layers
         num_gpu_batches = self.num_gpu_batches
@@ -548,7 +550,7 @@ def run_flexgen_dist(args):
     gpu = TorchDevice(f"cuda:{args.local_rank}")
     cpu = TorchDevice("cpu")
     disk = TorchDisk(args.offload_dir, None, args.local_rank)
-    env = Env(gpu=gpu, cpu=cpu, disk=disk, mixed=TorchMixedDevice([gpu, cpu, disk]))
+    env = ExecutionEnv(gpu=gpu, cpu=cpu, disk=disk, mixed=TorchMixedDevice([gpu, cpu, disk]))
     TorchTensor.name_count = count(start=args.rank, step=args.world_size)
 
     comm_test(gpu.dev if args.comm_device == "gpu" else cpu.dev)
@@ -578,14 +580,10 @@ def run_flexgen_dist(args):
           f"hidden size (prefill): {hidden_size/GB:.3f} GB")
 
     try:
-        # Warmup
-        print("warmup - init weights")
-        model.init_all_weights()
         print("warmup - generate")
         output_ids = model.generate(
             warmup_inputs, max_new_tokens=2, verbose=args.verbose)
 
-        # Benchmark
         print("benchmark - generate")
         for timer_name in ["generate-prompt", "generate"]:
             timers(timer_name).reset()
@@ -594,10 +592,8 @@ def run_flexgen_dist(args):
             debug_mode=args.debug_mode, cut_gen_len=cut_gen_len, verbose=args.verbose)
         prompt_costs = timers("generate-prompt").costs
         generate_costs = timers("generate").costs
-        print("benchmark - delete weights")
-        model.delete_all_weights()
     finally:
-        disk.close_copy_threads()
+        env.close_copy_threads()
 
     if args.rank != args.world_size - 1:
         return
