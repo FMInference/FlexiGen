@@ -28,7 +28,7 @@ class Task:
 
     do_sample: bool
     temperature: float
-    stop: int
+    stop: Optional[int]
 
 
 @dataclasses.dataclass(frozen=True)

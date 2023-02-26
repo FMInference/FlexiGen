@@ -634,7 +634,6 @@ class OptLM:
         self.attention_mask = array_1d(num_gpu_batches, ValueHolder)
 
         self.task = None
-
         self.init_all_weights()
 
     def set_task(self, task):
@@ -770,9 +769,12 @@ class OptLM:
             left, right = k * gpu_batch_size, (k + 1) * gpu_batch_size
             ids = self.hidden[i][j][k].pop().data.detach().cpu().numpy()
             pos = self.task.prompt_len + i
-            self.output_ids[left:right, pos:pos+1] = np.where(
-                self.stopped, self.config.pad_token_id, ids)
-            self.stopped = np.logical_or(self.stopped, ids == self.task.stop)
+            if self.task.stop:
+                self.output_ids[left:right, pos:pos+1] = np.where(
+                    self.stopped, self.config.pad_token_id, ids)
+                self.stopped = np.logical_or(self.stopped, ids == self.task.stop)
+            else:
+                self.output_ids[left:right, pos:pos+1] = ids
         else:  # move to home
             x = self.hidden[i][j][k]
             if x.val:  # x may already be moved due to overlapping
@@ -1025,7 +1027,7 @@ class OptLM:
                 self.sync()
             timers("generate").stop()
 
-            if np.all(self.stopped):
+            if self.task.stop and np.all(self.stopped):
                 break
 
     def generation_loop_overlap_multi_batch(self):
@@ -1185,7 +1187,7 @@ def run_flexgen(args):
     gpu = TorchDevice("cuda:0")
     cpu = TorchDevice("cpu")
     disk = TorchDisk(args.offload_dir)
-    env = Env(gpu=gpu, cpu=cpu, disk=disk, mixed=TorchMixedDevice([gpu, cpu, disk]))
+    env = ExecutionEnv(gpu=gpu, cpu=cpu, disk=disk, mixed=TorchMixedDevice([gpu, cpu, disk]))
 
     policy = Policy(args.gpu_batch_size, args.num_gpu_batches,
                     args.percent[0], args.percent[1],
@@ -1202,31 +1204,28 @@ def run_flexgen(args):
     assert not (args.compress_cache and args.attn_sparsity < 1.0), "Not implemented"
 
     opt_config = get_opt_config(args.model)
-    model = OptLM(opt_config, env, args.path, policy)
     cache_size = opt_config.cache_bytes(num_prompts, prompt_len + gen_len)
     hidden_size = opt_config.hidden_bytes(num_prompts, prompt_len + gen_len)
     print(f"model size: {opt_config.model_bytes()/GB:.3f} GB, "
           f"cache size: {cache_size/GB:.3f} GB, "
           f"hidden size (prefill): {hidden_size/GB:.3f} GB")
 
+    print("init weight...")
+    model = OptLM(opt_config, env, args.path, policy)
+
     try:
-        print("warmup - init weights")
-        model.init_all_weights()
         print("warmup - generate")
         output_ids = model.generate(
             warmup_inputs, max_new_tokens=1, verbose=args.verbose)
 
-        # Benchmark
         print("benchmark - generate")
         timers("generate").reset()
         output_ids = model.generate(
             inputs, max_new_tokens=args.gen_len,
             debug_mode=args.debug_mode, cut_gen_len=cut_gen_len, verbose=args.verbose)
         costs = timers("generate").costs
-        print("benchmark - delete weights")
-        model.delete_all_weights()
     finally:
-        disk.close_copy_threads()
+        env.close_copy_threads()
 
     # Log output
     prefill_latency = costs[0]
