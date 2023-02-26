@@ -49,6 +49,7 @@ def main(args):
     model = OptLM(args.model, env, args.path, policy)
 
     # Generate
+    print("Generate...")
     inputs = tokenizer(prompts, padding="max_length", max_length=128)
     output_ids = model.generate(
         inputs.input_ids,
@@ -63,6 +64,7 @@ def main(args):
         print("-" * 70)
 
     # Shutdown
+    print("Shutdown...")
     env.close_copy_threads()
 
 
