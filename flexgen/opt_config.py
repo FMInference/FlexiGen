@@ -224,9 +224,9 @@ def download_opt_weights(model_name, path):
     path = os.path.abspath(os.path.expanduser(path))
     os.makedirs(path, exist_ok=True)
 
-    for bin_file in bin_files:
+    for bin_file in tqdm(bin_files, desc="Convert format"):
         state = torch.load(bin_file)
-        for name, param in tqdm(state.items()):
+        for name, param in tqdm(state.items(), leave=False):
             name = name.replace("model.", "")
             name = name.replace("decoder.final_layer_norm", "decoder.layer_norm")
             param_path = os.path.join(path, name)
