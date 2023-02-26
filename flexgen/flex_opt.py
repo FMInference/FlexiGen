@@ -43,6 +43,8 @@ class Policy:
     act_gpu_percent: float
     act_cpu_percent: float
 
+    only_cpu: bool
+
     # Whether to overlap the I/O and compute
     overlap: bool
 
@@ -101,12 +103,8 @@ def init_weight_list(weight_specs, policy, env):
         home = get_choice(mid_percent * 100, dev_percents, dev_choices)
         shape, dtype, filename = weight_specs[i]
 
-        if len(shape) < 2:
-            pin_memory = True
-            compress = False
-        else:
-            pin_memory = policy.pin_weight
-            compress = policy.compress_weight
+        pin_memory = policy.pin_weight
+        compress = policy.compress_weight
 
         if not compress:
             weight = home.allocate(shape, dtype, pin_memory=pin_memory)
@@ -614,10 +612,11 @@ class OptLM:
         else:
             raise NotImplementedError()
 
-        # CUDA streams
-        self.load_weight_stream = torch.cuda.Stream()
-        self.load_cache_stream = torch.cuda.Stream()
-        self.store_cache_stream = torch.cuda.Stream()
+        if self.env.gpu.device_type == DeviceType.CUDA:
+            # CUDA streams
+            self.load_weight_stream = torch.cuda.Stream()
+            self.load_cache_stream = torch.cuda.Stream()
+            self.store_cache_stream = torch.cuda.Stream()
 
         # Intermediate tensors
         # The following buffers store values used
@@ -791,7 +790,8 @@ class OptLM:
 
     def sync(self):
         self.env.disk.synchronize()
-        torch.cuda.synchronize()
+        if self.env.gpu.device_type == DeviceType.CUDA:
+            torch.cuda.synchronize()
 
     def init_all_weights(self):
         self.weight_home = array_1d(self.num_layers, ValueHolder)
@@ -1184,15 +1184,18 @@ def run_flexgen(args):
     warmup_inputs = get_test_inputs(32, num_prompts, tokenizer)
     inputs = get_test_inputs(prompt_len, num_prompts, tokenizer)
 
-    gpu = TorchDevice("cuda:0")
+    if args.platform == "cpu":
+        gpu = TorchDevice("cpu")
+    else:
+        gpu = TorchDevice(args.platform)
     cpu = TorchDevice("cpu")
-    disk = TorchDisk(args.offload_dir)
-    env = ExecutionEnv(gpu=gpu, cpu=cpu, disk=disk, mixed=TorchMixedDevice([gpu, cpu, disk]))
+    disk = TorchDisk(args.offload_dir, platform=args.platform)
+    env = ExecutionEnv(gpu=gpu, cpu=cpu, disk=disk, mixed=TorchMixedDevice([gpu, cpu, disk]), platform=args.platform)
 
     policy = Policy(args.gpu_batch_size, args.num_gpu_batches,
                     args.percent[0], args.percent[1],
                     args.percent[2], args.percent[3],
-                    args.percent[4], args.percent[5],
+                    args.percent[4], args.percent[5], args.platform == "cpu",
                     args.overlap, args.sep_layer, args.pin_weight,
                     args.cpu_cache_compute, args.attn_sparsity,
                     args.compress_weight,
@@ -1203,7 +1206,8 @@ def run_flexgen(args):
                                       group_dim=2, symmetric=False))
     assert not (args.compress_cache and args.attn_sparsity < 1.0), "Not implemented"
 
-    opt_config = get_opt_config(args.model)
+    # use float32 for CPU platform
+    opt_config = get_opt_config(args.model, dtype=np.float32 if args.platform == "cpu" else np.float16)
     cache_size = opt_config.cache_bytes(num_prompts, prompt_len + gen_len)
     hidden_size = opt_config.hidden_bytes(num_prompts, prompt_len + gen_len)
     print(f"model size: {opt_config.model_bytes()/GB:.3f} GB, "
@@ -1311,6 +1315,7 @@ def add_parser_arguments(parser):
     parser.add_argument("--overlap", type=str2bool, nargs='?',
         const=True, default=True)
 
+    parser.add_argument("--platform", type=str, default="cuda:0", help="use the number to specify device, the platform can also be cpu or mps")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -1318,5 +1323,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     assert len(args.percent) == 6
+
+    if "cuda" not in args.platform:
+        # not clear how to enable overlap on MPS platform yet
+        args.overlap = False
+        args.pin_weight = False
+    if args.platform == "cpu":
+        args.percent = [0, 100, 0, 100, 0, 100]
 
     run_flexgen(args)
