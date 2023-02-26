@@ -205,7 +205,6 @@ def disable_hf_opt_init():
 
 def download_opt_weights(model_name, path):
     from huggingface_hub import snapshot_download
-    from transformers.utils import WEIGHTS_INDEX_NAME
     import torch
 
     print(f"Load the pre-trained pytorch weights of {model_name} from huggingface. "
@@ -216,7 +215,7 @@ def download_opt_weights(model_name, path):
     if "opt" in model_name:
         hf_model_name = "facebook/" + model_name
 
-    folder = snapshot_download(hf_model_name)
+    folder = snapshot_download(hf_model_name, allow_patterns="*.bin")
     bin_files = glob.glob(os.path.join(folder, "*.bin"))
 
     if "/" in model_name:
