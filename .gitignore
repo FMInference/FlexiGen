@@ -2,10 +2,11 @@
 .DS_store
 
 # built binaries
-third_party/pagecache-mangagement/trunk/fadv
-third_party/pagecache-mangagement/trunk/*.so
-third_party/pagecache-mangagement/trunk/sfr
-third_party/pagecache-mangagement/trunk/Makefile
+benchmark/third_party/pagecache-mangagement/trunk/fadv
+benchmark/third_party/pagecache-mangagement/trunk/*.so
+benchmark/third_party/pagecache-mangagement/trunk/sfr
+benchmark/third_party/pagecache-mangagement/trunk/Makefile
+dist
 
 # vscode & VIM & JetBrain
 .vscode/

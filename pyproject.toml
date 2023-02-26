@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "flexgen"
+version = "0.1.1"
+description = "Running large language models like OPT-175B/GPT-3 on a single GPU. Focusing on high-throughput large-batch generation."
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/FMInference/FlexGen"
+"Bug Tracker" = "https://github.com/FMInference/FlexGen/issues"
+
+[tool.setuptools.packages.find]
+exclude = ["benchmark*", "dist*", "playground*", "scripts*"]
+
+[tool.wheel]
+exclude = ["benchmark*", "dist*", "playground*", "scripts*"]
+
+[tool.poetry.dependencies]
+torch = ">=1.12"
+transformers = ">=4.24"
+numpy = "^1.22.0"
+tqdm = "^4.64.0"
+pulp = "^2.7.0"
+attrs = "^22.1.0"

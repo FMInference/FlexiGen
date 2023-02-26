@@ -3,7 +3,7 @@
 FlexGen is a high-throughput generation engine for running large language models with limited GPU memory (e.g., a 16GB T4 GPU or a 24GB RTX3090 gaming card!). FlexGen allows **high-throughput** generation by IO-efficient offloading, compression and **large effective batch sizes**.
 
 ## Recent Changes (It is getting better thanks to you🙏)
-We are glad the public has been really excited about FlexGen. However, our work (repo&paper) is still under preparation and not ready for public release / announcement yet.
+We are glad the public has been really excited about FlexGen. However, our work is still under preparation and not ready for public release / announcement yet.
 Thanks to early feedback about this project, we realized that early versions of this README and our paper were a bit unclear about the purpose of FlexGen.
 **This is a preliminary effort to lower the resource requirements of LLMs, but it also has a lot of limitations and does not aim to replace use cases when sufficient resources are available.**
 Our primary contributions are increasing throughput on single GPU instances - by effectively increasing the batch size.
@@ -71,7 +71,7 @@ FlexGen achieves a new Pareto-optimal frontier with significatnly higher maximum
 Other systems cannot further increase throughput due to out-of-memory.
 "FlexGen(c)" is FlexGen with compression.
 
-<img src="https://github.com/FMInference/FlexGen/blob/main/docs/throughput_vs_latency.jpg" alt="logo" width="500"></img>
+<img src="https://github.com/FMInference/FlexGen/blob/main/docs/throughput_vs_latency.jpg" alt="image" width="500"></img>
 
 ## How It Works
 FlexGen can be flexibly configured under various hardware resource constraints by aggregating memory and computation from the GPU, CPU, and disk. Through a linear programming optimizer, it searches for the best pattern to store and access the tensors, including weights, activations, and attention key/value (KV) cache. FlexGen further compresses both weights and KV cache to 4 bits with negligible accuracy loss. 
@@ -80,20 +80,28 @@ One key idea of FlexGen is to play the latency-throughput trade-off. Achieving l
 but the I/O efficiency of offloading can be greatly boosted for throughput-oriented scenarios (see the figure above).
 FlexGen utilizes a block schedule to reuse weight and overlap I/O with computation, as shown in figure (b) below, while other baseline systems use an inefficient row-by-row schedule, as shown in figure (a) below.
 
-<img src="https://github.com/FMInference/FlexGen/raw/main/docs/block_schedule.jpg" alt="logo" width="500"></img>
+<img src="https://github.com/FMInference/FlexGen/raw/main/docs/block_schedule.jpg" alt="image" width="500"></img>
 
 ## Install
 Requirements:  
  - PyTorch >= 1.12 [(Help)](https://pytorch.org/get-started/locally/)
 
-Instructions:
+### Method 1: With pip
+```
+pip install flexgen
+```
+
+### Method 2: From source
 ```
 git clone https://github.com/FMInference/FlexGen.git
 cd FlexGen
-pip3 install -e .
+pip install -e .
+```
 
-# (Optional) Install openmpi for multi-gpu execution
-# sudo apt install openmpi-bin
+### Optional
+Install openmpi for multi-gpu execution.
+```
+sudo apt install openmpi-bin
 ```
 
 ## Get Started with a Single GPU
@@ -178,4 +186,3 @@ We plan to work on the following features. Community contributions are welcome.
 - [ ] Support more models (BLOOM, CodeGen, GLM)
 - [ ] Release the cost model and policy optimizer
 - [ ] Release a pip installable package
-
