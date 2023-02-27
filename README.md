@@ -184,11 +184,13 @@ They save more memory but run slower.
 - Enable weight compression by adding `--compress-weight`. This can reduce the weight memory usage by around 70%.
 - Offload all weights to disk by using `--percent 0 0 100 0 100 0`. This requires very little CPU and GPU memory.
 
+### More Applications
+See [flexgen/apps](flexgen/apps) for more example applications.
+
 ## Roadmap
 We plan to work on the following features. Community contributions are welcome.
 
 - [ ] Support Apple silicon M1/M2 deployment
 - [ ] Support Colab deployment
-- [ ] Add a text summarization application and more throughput-oriented applications.
 - [ ] Support more models (BLOOM, CodeGen, GLM)
 - [ ] Release the cost model and policy optimizer

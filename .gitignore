@@ -16,6 +16,7 @@ dist
 # cache
 *__pycache__
 *.egg-info
+flexgen/apps/data
 
 # pickle
 *.pkl
