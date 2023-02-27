@@ -119,16 +119,14 @@ def get_hf_generation_args(request, tokenizer):
     return relevant_raw_request
 
 
-def get_batches(scenario_state, tokenizer, batch_size):
-    max_length = 1024
-
+def get_batches(scenario_state, tokenizer, batch_size, max_seq_length):
     prompts = []
     for r in scenario_state.request_states:
         prompts.append(r.request.prompt)
 
     input_ids = tokenizer(prompts, padding="max_length",
                           return_tensors="np",
-                          max_length=max_length).input_ids
+                          max_length=max_seq_length).input_ids
     return [
         {"input_ids": input_ids},
     ]
@@ -146,14 +144,12 @@ def main(args):
     instances = scenario.get_instances()
     instances = with_instance_ids(instances)
     instances = adapter.get_run_instances(instances)
-
-    scenario_state = adapter.adapt(instances, 1)
+    scenario_state = adapter.adapt(instances, parallelism=1)
 
     generation_args = get_hf_generation_args(
         scenario_state.request_states[0].request, tokenizer)
-    print(f"generation_args: {generation_args}")
-
-    batches = get_batches(scenario_state, tokenizer, max_eval_instances)
+    batches = get_batches(scenario_state, tokenizer,
+                          effective_bs, max_seq_length=1024)
     input_ids = batches[0]["input_ids"]
 
     # Initialize environment
