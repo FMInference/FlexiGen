@@ -1,9 +1,9 @@
 """Complete sentences with FlexGen and OPT models."""
 import argparse
 
-from transformers import AutoTokenizer
 from flexgen.flex_opt import (Policy, OptLM, ExecutionEnv, CompressionConfig,
         str2bool)
+from transformers import AutoTokenizer
 
 
 def main(args):
@@ -97,3 +97,4 @@ if __name__ == "__main__":
     assert len(args.percent) == 6
 
     main(args)
+

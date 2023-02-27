@@ -1279,10 +1279,10 @@ def add_parser_arguments(parser):
     parser.add_argument("--gen-len", type=int, default=32)
     parser.add_argument("--cut-gen-len", type=int,
         help="Cut generation length for fast debugging.")
-    parser.add_argument("--num-gpu-batches", type=int, default=1)
     parser.add_argument("--debug-mode", type=str,
         choices=["fewer_batch", "breakdown"])
     parser.add_argument("--gpu-batch-size", type=int, default=4)
+    parser.add_argument("--num-gpu-batches", type=int, default=1)
     parser.add_argument("--percent", nargs="+", type=int,
         default=[100, 0, 100, 0, 100, 0],
         help="Six numbers. They are "
