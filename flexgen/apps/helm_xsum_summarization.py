@@ -1,4 +1,8 @@
-"""Run the text summarization scenario from helm."""
+"""
+Run the text summarization scenario from helm.
+
+See also: https://crfm.stanford.edu/helm/
+"""
 import argparse
 from dataclasses import asdict
 
