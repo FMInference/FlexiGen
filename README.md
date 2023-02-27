@@ -176,9 +176,6 @@ python3 -m flexgen.apps.completion --model facebook/opt-30b --percent 0 100 100 
 python3 -m flexgen.apps.completion --model facebook/opt-iml-max-30b --percent 0 100 100 0 100 0
 ```
 
-### More Applications
-See [flexgen/apps](flexgen/apps) for more example applications.
-
 ### Handle Out-Of-Memory
 If you do not have enough GPU/CPU memory, here are a few things you can try.
 They save more memory but run slower.
