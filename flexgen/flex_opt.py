@@ -1323,10 +1323,24 @@ if __name__ == "__main__":
 
     assert len(args.percent) == 6
 
+    if "cuda" in args.platform:
+        if not torch.cuda.is_available():
+            if torch.backends.mps.is_available():
+                args.platform = "mps:0"
+            else:
+                args.platform = "cpu"
+            print("CUDA devices not available, {} is used instead".format(args.platform))
+
+    if "mps" in args.platform:
+        if not torch.backends.mps.is_available():
+            args.platform = "cpu"
+            print("MPS devices not available, CPU is used instead")
+
     if "cuda" not in args.platform:
         # not clear how to enable overlap on MPS platform yet
         args.overlap = False
         args.pin_weight = False
+
     if args.platform == "cpu":
         args.percent = [0, 100, 0, 100, 0, 100]
 
