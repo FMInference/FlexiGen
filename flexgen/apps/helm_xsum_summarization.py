@@ -4,14 +4,20 @@ Run the text summarization scenario from helm.
 See also: https://crfm.stanford.edu/helm/
 """
 import argparse
-from dataclasses import asdict
+from dataclasses import asdict, replace
+import os
+import json
 
-import helm
 from helm.benchmark.run_specs import (ScenarioSpec, RunSpec, get_summarization_adapter_spec,
     get_summarization_metric_specs, get_generative_harms_metric_specs)
-from helm.benchmark.runner import (create_scenario, AdapterFactory, with_instance_ids)
+from helm.benchmark.runner import (create_scenario, AdapterFactory, with_instance_ids, create_metric,
+    TokensMetric, Metric, MetricSpec, MetricResult, PerInstanceStats, create_metric, Stat,
+    ScenarioState, Counter, MetricName, ensure_directory_exists, write, asdict_without_nones)
+from helm.common.request import Request, RequestResult, Sequence, Token
 from helm.common.tokenization_request import (TokenizationRequestResult,
     TokenizationRequest, TokenizationToken)
+from helm.proxy.clients.client import truncate_sequence
+
 from flexgen.flex_opt import (Policy, OptLM, ExecutionEnv, CompressionConfig,
         str2bool)
 from transformers import AutoTokenizer
@@ -136,20 +142,7 @@ def get_batches(scenario_state, tokenizer, batch_size, max_seq_length):
     ]
 
 
-def main(args):
-    effective_bs = args.gpu_batch_size * args.num_gpu_batches
-    max_eval_instances = effective_bs
-
-    run_spec = get_xsum_sampled_summarization_spec(max_eval_instances=max_eval_instances)
-    tokenizer_service = OptTokenizer("facebook/opt-30b")
-    tokenizer = tokenizer_service.tokenizer
-    adapter = AdapterFactory.get_adapter(run_spec.adapter_spec, tokenizer_service)
-    scenario = create_scenario(run_spec.scenario_spec)
-    instances = scenario.get_instances()
-    instances = with_instance_ids(instances)
-    instances = adapter.get_run_instances(instances)
-    scenario_state = adapter.adapt(instances, parallelism=1)
-
+def execute(scenario_state, tokenizer, effective_bs):
     generation_args = get_hf_generation_args(
         scenario_state.request_states[0].request, tokenizer)
     batches = get_batches(scenario_state, tokenizer,
@@ -195,6 +188,137 @@ def main(args):
     print("Shutdown...")
     env.close_copy_threads()
 
+    request_states = []
+    for i, request_state in enumerate(scenario_state.request_states):
+        request = request_state.request
+        encoded_input = input_ids[i]
+        sequences = [output_ids[i]]
+        if not request.echo_prompt:
+            sequences = [sequence[len(encoded_input) :] for sequence in sequences]
+
+        all_tokens = [tokenizer.convert_ids_to_tokens(sequence) for sequence in sequences]
+        all_decoded_text = tokenizer.batch_decode(sequences)
+        all_logprobs_of_chosen_tokens = [[0] * len(x) for x in all_tokens]
+        all_top_logprobs_dicts = [[{}] * len(x) for x in all_tokens]
+
+        completions = []
+        for (decoded_text, tokens, logprobs_of_chosen_tokens, top_logprobs_dicts) in zip(
+            all_decoded_text, all_tokens, all_logprobs_of_chosen_tokens, all_top_logprobs_dicts
+        ):
+            completions.append(
+                {
+                    "text": decoded_text,
+                    "tokens": tokens,
+                    "logprobs": logprobs_of_chosen_tokens,
+                    "top_logprobs_dicts": top_logprobs_dicts,
+                }
+            )
+        response = {
+            "completions": completions, "input_length": len(encoded_input)}
+
+        completions = []
+        for raw_completion in response["completions"]:
+            sequence_logprob: float = 0
+            tokens: List[Token] = []
+
+            if request.echo_prompt:
+                # Add prompt to list of generated tokens.
+                generated_tokens = raw_completion["tokens"][response["input_length"] :]
+                for token_text in raw_completion["tokens"][: response["input_length"]]:
+                    tokens.append(Token(text=token_text, logprob=0.0, top_logprobs={}))
+            else:
+                generated_tokens = raw_completion["tokens"]
+
+            # Compute logprob for the entire sequence.
+            for token_text, logprob, top_logprobs_dict in zip(
+                generated_tokens, raw_completion["logprobs"], raw_completion["top_logprobs_dicts"]
+            ):
+                tokens.append(Token(text=token_text, logprob=logprob, top_logprobs=top_logprobs_dict))
+                sequence_logprob += logprob
+
+            completion = Sequence(text=raw_completion["text"], logprob=sequence_logprob, tokens=tokens)
+            completion = truncate_sequence(completion, request)
+            completions.append(completion)
+
+        result = RequestResult(
+            success=True,
+            cached=False,
+            request_time=0,
+            request_datetime=0,
+            completions=completions,
+            embedding=[],
+        )
+
+        request_states.append(replace(request_state, result=result))
+
+    return ScenarioState(scenario_state.adapter_spec, request_states)
+
+
+def main(args):
+    effective_bs = args.gpu_batch_size * args.num_gpu_batches
+    max_eval_instances = effective_bs
+
+    run_spec = get_xsum_sampled_summarization_spec(max_eval_instances=max_eval_instances)
+    run_path: str = os.path.join(args.run_path, run_spec.name)
+    ensure_directory_exists(run_path)
+    eval_cache_path: str = os.path.join(run_path, "eval_cache")
+    ensure_directory_exists(eval_cache_path)
+
+    tokenizer_service = OptTokenizer("facebook/opt-30b")
+    tokenizer = tokenizer_service.tokenizer
+    adapter = AdapterFactory.get_adapter(run_spec.adapter_spec, tokenizer_service)
+
+    scenario = create_scenario(run_spec.scenario_spec)
+    instances = scenario.get_instances()
+    instances = with_instance_ids(instances)
+    instances = adapter.get_run_instances(instances)
+    scenario_state = adapter.adapt(instances, parallelism=1)
+
+    scenario_state = execute(scenario_state, tokenizer, effective_bs)
+
+    metrics = (
+        [create_metric(metric_spec) for metric_spec in run_spec.metric_specs]) + [TokensMetric()]
+    metrics = [metrics[0]]
+
+    stats: List[Stat] = []
+    per_instance_stats: List[PerInstanceStats] = []
+    for metric in metrics:
+        metric_result: MetricResult = metric.evaluate(
+            scenario_state,
+            tokenizer_service,
+            eval_cache_path,
+            parallelism=1,
+        )
+        stats.extend(metric_result.aggregated_stats)
+        per_instance_stats.extend(metric_result.per_instance_stats)
+
+    # Check that there aren't duplicate `Stat`s
+    # Note: doesn't catch near misses.
+    metric_counts: typing.Counter[MetricName] = Counter([stat.name for stat in stats])
+    for metric_name, count in metric_counts.items():
+        if count > 1:
+            print(f"WARNING: duplicate metric name {metric_name}")
+
+    # Print out the number of stats
+    print(f"Generated {len(stats)} stats.")
+
+    # Output benchmarking information and results to files
+    write(os.path.join(run_path, "run_spec.json"), json.dumps(asdict_without_nones(run_spec), indent=2))
+
+    # Write out scenario
+    write(os.path.join(run_path, "scenario.json"), json.dumps(asdict_without_nones(scenario), indent=2))
+
+    # Write scenario state
+    write(os.path.join(run_path, "scenario_state.json"), json.dumps(asdict_without_nones(scenario_state), indent=2))
+
+    write(
+        os.path.join(run_path, "stats.json"), json.dumps([asdict_without_nones(stat) for stat in stats], indent=2)
+    )
+    write(
+        os.path.join(run_path, "per_instance_stats.json"),
+        json.dumps(list(map(asdict_without_nones, per_instance_stats)), indent=2),
+    )
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -203,6 +327,7 @@ if __name__ == "__main__":
     parser.add_argument("--path", type=str, default="~/opt_weights",
         help="The path to the model weights. If there are no cached weights, "
              "FlexGen will automatically download them from HuggingFace.")
+    parser.add_argument("--run-path", type=str, default="runs")
     parser.add_argument("--offload-dir", type=str, default="~/flexgen_offload_dir",
         help="The directory to offload tensors. ")
     parser.add_argument("--gpu-batch-size", type=int, default=4)
