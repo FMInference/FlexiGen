@@ -125,6 +125,7 @@ python3 -m flexgen.flex_opt --model facebook/opt-30b --percent 0 100 100 0 100 0
 
 ### OPT-175B
 To run OPT-175B, you need to download the weights from [metaseq](https://github.com/facebookresearch/metaseq/tree/main/projects/OPT) and convert the weights into Alpa [format](https://alpa.ai/tutorials/opt_serving.html#convert-opt-175b-weights-into-alpa-formats).
+The numpy weights should be put under `~/opt_weights/opt-175b-np/` by default. You can check the downloaded weights of smaller models for the required format.
 You can then try to offloading all weights to disk by
 ```
 python3 -m flexgen.flex_opt --model facebook/opt-175b --percent 0 0 100 0 100 0 --offload-dir YOUR_SSD_FOLDER
