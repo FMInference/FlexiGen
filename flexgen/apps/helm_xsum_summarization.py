@@ -17,9 +17,9 @@ from helm.common.request import Request, RequestResult, Sequence, Token
 from helm.common.tokenization_request import (TokenizationRequestResult,
     TokenizationRequest, TokenizationToken)
 from helm.proxy.clients.client import truncate_sequence
-
 from flexgen.flex_opt import (Policy, OptLM, ExecutionEnv, CompressionConfig,
         str2bool)
+import numpy as np
 from transformers import AutoTokenizer
 
 
@@ -137,8 +137,10 @@ def get_batches(scenario_state, tokenizer, batch_size, max_seq_length):
     input_ids = tokenizer(prompts, padding="max_length",
                           return_tensors="np",
                           max_length=max_seq_length).input_ids
+    num_batches = len(input_ids) // batch_size
     return [
-        {"input_ids": input_ids},
+        {"input_ids": input_ids[i * batch_size: (i+1) * batch_size]}
+        for i in range(num_batches)
     ]
 
 
@@ -147,7 +149,6 @@ def execute(scenario_state, tokenizer, effective_bs):
         scenario_state.request_states[0].request, tokenizer)
     batches = get_batches(scenario_state, tokenizer,
                           effective_bs, max_seq_length=1024)
-    input_ids = batches[0]["input_ids"]
 
     # Initialize environment
     env = ExecutionEnv.create(args.offload_dir)
@@ -172,15 +173,25 @@ def execute(scenario_state, tokenizer, effective_bs):
 
     # Generate
     print("Generate...")
-    output_ids = model.generate(
-        input_ids,
-        do_sample=generation_args["do_sample"],
-        temperature=generation_args["temperature"],
-        max_new_tokens=generation_args["max_new_tokens"],
-        stop=generation_args["eos_token_id"])
+    input_ids_batches = []
+    output_ids_batches = []
+    for batch in batches:
+        input_ids_tmp = batch["input_ids"]
+        output_ids_tmp = model.generate(
+            input_ids_tmp,
+            do_sample=generation_args["do_sample"],
+            temperature=generation_args["temperature"],
+            max_new_tokens=generation_args["max_new_tokens"],
+            stop=generation_args["eos_token_id"])
+        input_ids_batches.append(input_ids_tmp)
+        output_ids_batches.append(output_ids_tmp)
+
+    input_ids = np.concatenate(input_ids_batches)
+    output_ids = np.concatenate(output_ids_batches)
     outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)
     print("Outputs:\n" + 70 * '-')
-    for i in range(len(outputs)):
+    #for i in range(len(outputs)):
+    for i in [0, len(outputs) - 1]:
         print(f"{i}:\n{outputs[i]}")
         print("-" * 70)
 
@@ -256,7 +267,7 @@ def execute(scenario_state, tokenizer, effective_bs):
 
 def main(args):
     effective_bs = args.gpu_batch_size * args.num_gpu_batches
-    max_eval_instances = effective_bs
+    max_eval_instances = args.max_eval_instances // effective_bs * effective_bs
 
     run_spec = get_xsum_sampled_summarization_spec(max_eval_instances=max_eval_instances)
     run_path: str = os.path.join(args.run_path, run_spec.name)
@@ -322,7 +333,7 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model", type=str, default="facebook/opt-6.7b",
+    parser.add_argument("--model", type=str, default="facebook/opt-1.3b",
         help="The model name.")
     parser.add_argument("--path", type=str, default="~/opt_weights",
         help="The path to the model weights. If there are no cached weights, "
@@ -332,6 +343,7 @@ if __name__ == "__main__":
         help="The directory to offload tensors. ")
     parser.add_argument("--gpu-batch-size", type=int, default=4)
     parser.add_argument("--num-gpu-batches", type=int, default=1)
+    parser.add_argument("--max-eval-instances", type=int, default=16)
     parser.add_argument("--percent", nargs="+", type=int,
         default=[100, 0, 100, 0, 100, 0],
         help="Six numbers. They are "
