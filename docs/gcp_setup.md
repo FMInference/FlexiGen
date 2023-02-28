@@ -17,14 +17,14 @@ conda activate flexgen
 
 pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116
 
-git clone git@github.com:Ying1123/FlexGen.git
+git clone git@github.com:FMInference/FlexGen.git
 cd FlexGen
 pip3 install -e .
 
-cd FlexGen/third_party/DeepSpeed
+cd FlexGen/benchmark/third_party/DeepSpeed
 pip3 install -e .
 
-cd FlexGen/third_party/transformers
+cd FlexGen/benchmark/third_party/transformers
 pip3 install -e .
 pip3 install accelerate==0.15.0
 ```
