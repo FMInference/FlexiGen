@@ -18,6 +18,7 @@ dist
 *.egg-info
 flexgen/apps/data
 flexgen/apps/runs
+flexgen/apps/benchmark_output
 
 # pickle
 *.pkl

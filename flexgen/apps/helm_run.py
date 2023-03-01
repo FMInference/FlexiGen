@@ -1,57 +1,33 @@
 """
-Run the text summarization scenario from helm.
+Run a scenario from HELM.
 
 See also: https://crfm.stanford.edu/helm/
+helm package version: 0.2.1
 """
 import argparse
 from dataclasses import asdict, replace
-import os
 import json
+import os
+import time
 
+from flexgen.flex_opt import (Policy, OptLM, ExecutionEnv, CompressionConfig,
+        str2bool)
+from helm.benchmark.presentation.run_entry import RunEntry
+from helm.benchmark.run import run_entries_to_run_specs
 from helm.benchmark.run_specs import (ScenarioSpec, RunSpec, get_summarization_adapter_spec,
-    get_summarization_metric_specs, get_generative_harms_metric_specs)
+    get_summarization_metric_specs, get_generative_harms_metric_specs,
+    ADAPT_MULTIPLE_CHOICE_JOINT, get_multiple_choice_adapter_spec)
 from helm.benchmark.runner import (create_scenario, AdapterFactory, with_instance_ids, create_metric,
     TokensMetric, Metric, MetricSpec, MetricResult, PerInstanceStats, create_metric, Stat,
-    ScenarioState, Counter, MetricName, ensure_directory_exists, write, asdict_without_nones)
+    ScenarioState, Counter, MetricName, ensure_directory_exists, write, asdict_without_nones,
+    DataPreprocessor)
 from helm.common.request import Request, RequestResult, Sequence, Token
 from helm.common.tokenization_request import (TokenizationRequestResult,
     TokenizationRequest, TokenizationToken)
 from helm.proxy.clients.client import truncate_sequence
-
-from flexgen.flex_opt import (Policy, OptLM, ExecutionEnv, CompressionConfig,
-        str2bool)
+import numpy as np
+from tqdm import tqdm
 from transformers import AutoTokenizer
-
-
-def get_xsum_sampled_summarization_spec(temperature: float = 0.3, device: str = "cpu",
-        max_eval_instances: int = 512) -> RunSpec:
-    # Adapted from helm/benchmark/run_specs.py
-    scenario_spec = ScenarioSpec(
-        class_name="helm.benchmark.scenarios.summarization_scenario.SummarizationScenario",
-        args={
-            "dataset_name": "xsum-sampled",
-            "sampling_min_length": 50,
-            "sampling_max_length": 150,
-            "doc_max_length": 512,
-        },
-    )
-
-    adapter_spec = get_summarization_adapter_spec(
-        num_sents=1,
-        max_tokens=64,  # From Zhang et al. 2020 (https://arxiv.org/pdf/1912.08777.pdf)
-        temperature=temperature,  # The default of 0.3 was determined in initial pilots, comparing to 0.7 and 1.0
-        max_eval_instances=max_eval_instances,
-        model="huggingface/gpt2",
-    )
-
-    return RunSpec(
-        name=f"summarization_xsum:temperature={temperature},device={device}",
-        scenario_spec=scenario_spec,
-        adapter_spec=adapter_spec,
-        metric_specs=get_summarization_metric_specs({"task": "summarization_xsum_sampled", "device": device})
-        + get_generative_harms_metric_specs(),
-        groups=["summarization_xsum"],
-    )
 
 
 class OptTokenizer:
@@ -91,7 +67,7 @@ class OptTokenizer:
 
 
 def get_hf_generation_args(request, tokenizer):
-    # Adapted from huggingface_client.py
+    # Adapted from helm/proxy/clients/huggingface_client.py
     raw_request = {
         "engine": request.model_engine,
         "prompt": request.prompt,
@@ -125,29 +101,43 @@ def get_hf_generation_args(request, tokenizer):
         for key in raw_request
         if key not in ["engine", "prompt", "echo_prompt", "stop_sequences"]
     }
+    print(f"relevant_raw_request: {relevant_raw_request}")
 
     return relevant_raw_request
 
 
-def get_batches(scenario_state, tokenizer, batch_size, max_seq_length):
+def get_batches(scenario_state, tokenizer, batch_size, pad_to_seq_len):
     prompts = []
     for r in scenario_state.request_states:
         prompts.append(r.request.prompt)
 
+    # Tokenize
     input_ids = tokenizer(prompts, padding="max_length",
                           return_tensors="np",
-                          max_length=max_seq_length).input_ids
+                          max_length=pad_to_seq_len).input_ids
+    assert len(input_ids.shape) == 2, "Please use a longer pad_to_seq_len"
+    print(f"Max sequence length: {max(np.sum(input_ids != tokenizer.pad_token_id, axis=1))}, "
+          f"Pad to sequences length: {pad_to_seq_len}")
+
+    # Pad and divide into batches
+    n_prompts = len(prompts)
+    if n_prompts % batch_size != 0:
+        input_ids = np.concatenate((input_ids, np.full((batch_size - n_prompts % batch_size,
+            input_ids.shape[1]), tokenizer.pad_token_id, dtype=input_ids.dtype)))
+
+    num_batches = len(input_ids) // batch_size
+    assert len(input_ids) % batch_size == 0
     return [
-        {"input_ids": input_ids},
+        {"input_ids": input_ids[i * batch_size: (i+1) * batch_size]}
+        for i in range(num_batches)
     ]
 
 
-def execute(scenario_state, tokenizer, effective_bs):
+def execute(scenario_state, tokenizer, effective_bs, pad_to_seq_len):
     generation_args = get_hf_generation_args(
         scenario_state.request_states[0].request, tokenizer)
     batches = get_batches(scenario_state, tokenizer,
-                          effective_bs, max_seq_length=1024)
-    input_ids = batches[0]["input_ids"]
+                          effective_bs, pad_to_seq_len=pad_to_seq_len)
 
     # Initialize environment
     env = ExecutionEnv.create(args.offload_dir)
@@ -158,7 +148,7 @@ def execute(scenario_state, tokenizer, effective_bs):
                     args.percent[2], args.percent[3],
                     args.percent[4], args.percent[5],
                     overlap=True, sep_layer=True, pin_weight=args.pin_weight,
-                    cpu_cache_compute=False, attn_sparsity=1.0,
+                    cpu_cache_compute=args.cpu_cache_compute, attn_sparsity=1.0,
                     compress_weight=args.compress_weight,
                     comp_weight_config=CompressionConfig(
                         num_bits=4, group_size=64,
@@ -168,21 +158,36 @@ def execute(scenario_state, tokenizer, effective_bs):
                         num_bits=4, group_size=64,
                         group_dim=2, symmetric=False))
 
+    print(f"Init weights begin.")
+    tic = time.time()
     model = OptLM(args.model, env, args.path, policy)
+    print(f"Init weights end. Elapsed: {time.time() - tic:.2f} s", flush=True)
 
     # Generate
-    print("Generate...")
-    output_ids = model.generate(
-        input_ids,
-        do_sample=generation_args["do_sample"],
-        temperature=generation_args["temperature"],
-        max_new_tokens=generation_args["max_new_tokens"],
-        stop=generation_args["eos_token_id"])
+    print(f"Generate begin. #sequences: {len(batches) * effective_bs}")
+    tic = time.time()
+    input_ids_batches = []
+    output_ids_batches = []
+    for batch in tqdm(batches):
+        input_ids_tmp = batch["input_ids"]
+        output_ids_tmp = model.generate(
+            input_ids_tmp,
+            do_sample=generation_args["do_sample"],
+            temperature=generation_args["temperature"],
+            max_new_tokens=generation_args["max_new_tokens"],
+            stop=generation_args.get("eos_token_id", None))
+        input_ids_batches.append(input_ids_tmp)
+        output_ids_batches.append(output_ids_tmp)
+    print(f"Generate end. Elapsed: {time.time() - tic:.2f} s", flush=True)
+
+    input_ids = np.concatenate(input_ids_batches)
+    output_ids = np.concatenate(output_ids_batches)
     outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)
-    print("Outputs:\n" + 70 * '-')
-    for i in range(len(outputs)):
-        print(f"{i}:\n{outputs[i]}")
-        print("-" * 70)
+    #print("Outputs:\n" + 70 * '-')
+    ##for i in range(len(outputs)):
+    #for i in [0, len(outputs) - 1]:
+    #    print(f"{i}:\n{outputs[i]}")
+    #    print("-" * 70)
 
     # Shutdown
     print("Shutdown...")
@@ -254,28 +259,49 @@ def execute(scenario_state, tokenizer, effective_bs):
     return ScenarioState(scenario_state.adapter_spec, request_states)
 
 
-def main(args):
+def run_entry(description, pad_to_seq_len, args):
     effective_bs = args.gpu_batch_size * args.num_gpu_batches
-    max_eval_instances = effective_bs
+    parallelism = 4
 
-    run_spec = get_xsum_sampled_summarization_spec(max_eval_instances=max_eval_instances)
+    ##### RunSpec #####
+    run_entries = [RunEntry(description, priority=1, groups=None)]
+    run_specs = run_entries_to_run_specs(
+        run_entries=run_entries,
+        max_eval_instances=args.max_eval_instances,
+    )
+    run_spec = run_specs[0]
     run_path: str = os.path.join(args.run_path, run_spec.name)
     ensure_directory_exists(run_path)
     eval_cache_path: str = os.path.join(run_path, "eval_cache")
     ensure_directory_exists(eval_cache_path)
 
+    ##### Adapter #####
     tokenizer_service = OptTokenizer("facebook/opt-30b")
     tokenizer = tokenizer_service.tokenizer
     adapter = AdapterFactory.get_adapter(run_spec.adapter_spec, tokenizer_service)
 
+    ##### Scenario #####
     scenario = create_scenario(run_spec.scenario_spec)
     instances = scenario.get_instances()
+
+    # Give each instance a unique ID
     instances = with_instance_ids(instances)
+
+    # Get the instances necessary for this run.
     instances = adapter.get_run_instances(instances)
-    scenario_state = adapter.adapt(instances, parallelism=1)
 
-    scenario_state = execute(scenario_state, tokenizer, effective_bs)
+    # Data preprocessing
+    instances = DataPreprocessor(run_spec.data_augmenter_spec).preprocess(
+        instances, parallelism=parallelism
+    )
+    scenario_state = adapter.adapt(instances, parallelism=parallelism)
 
+    ##### Execute #####
+    if pad_to_seq_len is None:
+        pad_to_seq_len = adapter.window_service.max_sequence_length - run_spec.adapter_spec.max_tokens
+    scenario_state = execute(scenario_state, tokenizer, effective_bs, pad_to_seq_len)
+
+    ##### Metrics #####
     metrics = (
         [create_metric(metric_spec) for metric_spec in run_spec.metric_specs]) + [TokensMetric()]
     metrics = [metrics[0]]
@@ -287,7 +313,7 @@ def main(args):
             scenario_state,
             tokenizer_service,
             eval_cache_path,
-            parallelism=1,
+            parallelism=parallelism,
         )
         stats.extend(metric_result.aggregated_stats)
         per_instance_stats.extend(metric_result.per_instance_stats)
@@ -320,9 +346,15 @@ def main(args):
     )
 
 
+def main(args):
+    run_entry(args.description, args.pad_to_seq_len, args)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model", type=str, default="facebook/opt-6.7b",
+    parser.add_argument("--description", type=str, required=True)
+    parser.add_argument("--pad-to-seq-len", type=int)
+    parser.add_argument("--model", type=str, default="facebook/opt-1.3b",
         help="The model name.")
     parser.add_argument("--path", type=str, default="~/opt_weights",
         help="The path to the model weights. If there are no cached weights, "
@@ -330,8 +362,9 @@ if __name__ == "__main__":
     parser.add_argument("--run-path", type=str, default="runs")
     parser.add_argument("--offload-dir", type=str, default="~/flexgen_offload_dir",
         help="The directory to offload tensors. ")
-    parser.add_argument("--gpu-batch-size", type=int, default=4)
+    parser.add_argument("--gpu-batch-size", type=int, default=16)
     parser.add_argument("--num-gpu-batches", type=int, default=1)
+    parser.add_argument("--max-eval-instances", type=int)
     parser.add_argument("--percent", nargs="+", type=int,
         default=[100, 0, 100, 0, 100, 0],
         help="Six numbers. They are "
@@ -343,6 +376,7 @@ if __name__ == "__main__":
          "the percentage of activations on CPU")
     parser.add_argument("--pin-weight", type=str2bool, nargs="?",
         const=True, default=True)
+    parser.add_argument("--cpu-cache-compute", action="store_true")
     parser.add_argument("--compress-weight", action="store_true",
         help="Whether to compress weight.")
     parser.add_argument("--compress-cache", action="store_true",

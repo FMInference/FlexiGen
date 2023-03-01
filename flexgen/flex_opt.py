@@ -770,9 +770,10 @@ class OptLM:
             ids = self.hidden[i][j][k].pop().data.detach().cpu().numpy()
             pos = self.task.prompt_len + i
             if self.task.stop:
+                stopped = self.stopped[left:right]
                 self.output_ids[left:right, pos:pos+1] = np.where(
-                    self.stopped, self.config.pad_token_id, ids)
-                self.stopped = np.logical_or(self.stopped, ids == self.task.stop)
+                    stopped, self.config.pad_token_id, ids)
+                stopped[:] = np.logical_or(stopped, ids == self.task.stop)
             else:
                 self.output_ids[left:right, pos:pos+1] = ids
         else:  # move to home

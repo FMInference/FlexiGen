@@ -277,7 +277,7 @@ class TorchDevice:
         logits = F.linear(hidden, w_token.data)
         last_token_logits = logits[:,-1,:]
 
-        if do_sample:
+        if do_sample and not temperature < 1e-5:
             probs = torch.softmax(last_token_logits / temperature, dim=-1)
             ids = torch.multinomial(probs, num_samples=1)
         else:

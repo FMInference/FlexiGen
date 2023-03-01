@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "flexgen"
-version = "0.1.6"
+version = "0.1.7"
 description = "Running large language models like OPT-175B/GPT-3 on a single GPU. Focusing on high-throughput large-batch generation."
 readme = "README.md"
 requires-python = ">=3.7"
