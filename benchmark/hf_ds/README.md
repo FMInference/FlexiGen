@@ -6,6 +6,10 @@ Install the forks of Huggingface/transformers and Microsoft/DeepSpeed following 
 ```
 pip3 install accelerate==0.15.0
 ```
+Install dependencies:
+```
+sudo apt-get install libaio-dev
+```
 
 ## Run one case
 
