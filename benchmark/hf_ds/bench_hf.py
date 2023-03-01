@@ -134,11 +134,11 @@ suite_ds_175b_s1024 = [
 ]
 
 suites = {
-    "hf_s256": suite_hf_6b7_s256 + suite_hf_30b_s256,
+    "hf_s256": suite_hf_6b7_s256 + suite_hf_30b_s256 + suite_hf_175b_s256,
     "hf_s512": suite_hf_6b7_s512 + suite_hf_30b_s512 + suite_hf_175b_s512,
     "hf_s1024": suite_hf_6b7_s1024 + suite_hf_30b_s1024 + suite_hf_175b_s1024,
 
-    "ds_s256": suite_ds_6b7_s256 + suite_ds_30b_s256,
+    "ds_s256": suite_ds_6b7_s256 + suite_ds_30b_s256 + suite_hf_175b_s256,
     "ds_s512": suite_ds_6b7_s512 + suite_ds_30b_s512 + suite_ds_175b_s512,
     "ds_s1024": suite_ds_6b7_s1024 + suite_ds_30b_s1024 + suite_ds_175b_s1024,
 
