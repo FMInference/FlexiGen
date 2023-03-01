@@ -37,34 +37,50 @@ suite_1b3_test = [
 ]
 
 suite_6b7_1x1 = [
-    # seq_len = 512
+    # seq_len = 256, gen_len = 32
+    # 53.29 token/s
+    Case("--model facebook/opt-6.7b --path _DUMMY_ --prompt-len 256 --gen-len 32 --percent 100 0 100 0 100 0 --gpu-batch-size 4 --overlap False"),
+    # seq_len = 512, gen_len = 32
     Case("--model facebook/opt-6.7b --path _DUMMY_ --percent 100 0 100 0 100 0 --gpu-batch-size 2 --overlap False"),
-    # seq_len = 1024
+    # seq_len = 1024, gen_len = 32
     Case("--model facebook/opt-6.7b --path _DUMMY_ --percent 100 0 100 0 100 0 --gpu-batch-size 1 --overlap False --prompt-len 1024"),
 ]
 
 suite_6b7_1x1_comp = [
-    # seq_len = 512
+    # seq_len = 256, gen_len = 32
+    # 56.72 token/s
+    Case("--model facebook/opt-6.7b --path _DUMMY_ --prompt-len 256 --gen-len 32 --percent 100 0 100 0 100 0 --gpu-batch-size 128 --overlap False --compress-weight --compress-cache"),
+    # seq_len = 512, gen_len = 32
     Case("--model facebook/opt-6.7b --path _DUMMY_ --percent 100 0 100 0 100 0 --gpu-batch-size 72 --overlap False --compress-weight --compress-cache"),
-    # seq_len = 1024
+    # seq_len = 1024, gen_len = 32
     Case("--model facebook/opt-6.7b --path _DUMMY_ --percent 100 0 100 0 100 0 --gpu-batch-size 28 --overlap False --compress-weight --compress-cache --prompt-len 1024"),
 ]
 
 suite_30b_1x1 = [
-    # seq_len = 512
+    # seq_len = 256, gen_len = 32
+    # 16.01 token/s
+    Case("--model facebook/opt-30b --path _DUMMY_ --prompt-len 256 --gen-len 32 --percent 10 90 0 100 0 100 --gpu-batch-size 160 --num-gpu-batches 2 --cpu --debug fewer_batch", "", False),
+    # seq_len = 512, gen_len = 32
     Case("--model facebook/opt-30b --path _DUMMY_ --percent 20 80 0 100 0 100 --gpu-batch-size 48 --num-gpu-batches 3 --cpu --debug fewer_batch"),
-    # seq_len = 1024
+    # seq_len = 1024, gen_len = 32
     Case("--model facebook/opt-30b --path _DUMMY_ --percent 4 96 0 100 0 100 --gpu-batch-size 20 --num-gpu-batches 4 --cpu --debug fewer_batch --prompt-len 1024"),
 ]
 
 suite_30b_1x1_comp = [
-    # seq_len = 512
+    # seq_len = 256, gen_len = 32
+    # 16.86 token/s
+    Case("--model facebook/opt-30b --path _DUMMY_ --prompt-len 256 --gen-len 32 --percent 0 100 0 100 0 100 --gpu-batch-size 128 --num-gpu-batches 8 --debug fewer_batch --compress-cache"),
+    # seq_len = 512, gen_len = 32
     Case("--model facebook/opt-30b --path _DUMMY_ --percent 0 100 0 100 0 100 --gpu-batch-size 64 --num-gpu-batches 8 --debug fewer_batch --compress-cache"),
-    # seq_len = 1024
+    # Case("--model facebook/opt-30b --path _DUMMY_ --percent 0 100 0 100 0 100 --gpu-batch-size 16 --num-gpu-batches 20 --debug fewer_batch --compress-cache"),
+    # seq_len = 1024, gen_len = 32
     Case("--model facebook/opt-30b --path _DUMMY_ --percent 0 100 0 100 0 100 --gpu-batch-size 20 --num-gpu-batches 12 --debug fewer_batch --compress-cache --prompt-len 1024"),
 ]
 
 suite_175b_1x1 = [
+    # seq_len = 256
+    # 1.36 token/s
+    Case("--model facebook/opt-175b --path _DUMMY_ --prompt-len 256 --gen-len 32 --pin-weight 0 --percent 0 50 0 0 0 100 --gpu-batch-size 64 --num-gpu-batches 8 --cpu --debug fewer_batch"),
     # seq_len = 512
     Case("--model facebook/opt-175b --path _DUMMY_ --pin-weight 0 --percent 0 50 0 0 0 100 --gpu-batch-size 32 --num-gpu-batches 8 --cpu --debug fewer_batch"),
     # seq_len = 1024
@@ -72,6 +88,9 @@ suite_175b_1x1 = [
 ]
 
 suite_175b_1x1_comp = [
+    # seq_len = 256
+    # 2.26 token/s
+    Case("--model facebook/opt-175b --path _DUMMY_ --prompt-len 256 --gen-len 32 --pin-weight 0 --percent 0 100 0 100 0 100 --gpu-batch-size 96 --num-gpu-batches 3 --debug fewer_batch --compress-weight --compress-cache"),
     # seq_len = 512
     Case("--model facebook/opt-175b --path _DUMMY_ --pin-weight 0 --percent 0 100 0 100 0 100 --gpu-batch-size 48 --num-gpu-batches 3 --debug fewer_batch --compress-weight --compress-cache"),
     # seq_len = 1024
