@@ -38,6 +38,7 @@ class ExecutionEnv:
     cpu: Any = None
     disk: Any = None
     mixed: Any = None
+    platform: Any = None
 
     @classmethod
     def create(cls, offload_dir):
