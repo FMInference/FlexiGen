@@ -99,6 +99,11 @@ def get_opt_config(name, **kwargs):
             max_seq_len=2048, num_hidden_layers=48, n_head=56,
             hidden_size=7168, input_dim=7168, ffn_embed_dim=7168 * 4,
         )
+    elif arch_name == "galactica-30b":
+        config = OptConfig(name=name,
+            max_seq_len=2048, num_hidden_layers=48, n_head=56,
+            hidden_size=7168, input_dim=7168, ffn_embed_dim=7168 * 4, vocab_size=50000,
+        )
     elif arch_name == "opt-66b":
         config = OptConfig(name=name,
             max_seq_len=2048, num_hidden_layers=64, n_head=72,
@@ -136,6 +141,8 @@ def download_opt_weights_old(model_name, path):
     elif "bloom" in model_name:
         hf_model_name = "bigscience/" + model_name
         model_class = BloomForCausalLM
+    elif "galactica" in model_name:
+        hf_model_name = "facebook/" + model_name
     else:
         raise ValueError("Invalid model name: {model_name}")
 
@@ -153,6 +160,12 @@ def download_opt_weights_old(model_name, path):
 
     print(f"Convert the weights to numpy format under {path} ...")
     if "opt" in model_name:
+        for name, param in tqdm(list(model.model.named_parameters())):
+            name = name.replace("decoder.final_layer_norm", "decoder.layer_norm")
+            param_path = os.path.join(path, name)
+            with open(param_path, "wb") as f:
+                np.save(f, param.cpu().detach().numpy())
+    elif "galactica" in model_name:
         for name, param in tqdm(list(model.model.named_parameters())):
             name = name.replace("decoder.final_layer_norm", "decoder.layer_norm")
             param_path = os.path.join(path, name)
@@ -213,6 +226,8 @@ def download_opt_weights(model_name, path):
           f"checking the memory usage of this process.")
 
     if "opt" in model_name:
+        hf_model_name = "facebook/" + model_name
+    elif "galactica" in model_name:
         hf_model_name = "facebook/" + model_name
 
     folder = snapshot_download(hf_model_name, allow_patterns="*.bin")
