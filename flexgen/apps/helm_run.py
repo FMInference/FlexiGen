@@ -27,7 +27,7 @@ from helm.common.tokenization_request import (TokenizationRequestResult,
 from helm.proxy.clients.client import truncate_sequence
 import numpy as np
 from tqdm import tqdm
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer, AutoConfig
 
 
 class OptTokenizer:
@@ -36,6 +36,10 @@ class OptTokenizer:
     def __init__(self, name):
         self.tokenizer = AutoTokenizer.from_pretrained(name, padding_side="left")
         self.tokenizer.add_bos_token = False
+        if 'galactica' in name:
+            config = AutoConfig.from_pretrained(name)
+            self.tokenizer.pad_token = config.pad_token_id
+            self.tokenizer.eos_token = config.eos_token_id
 
     def tokenize(self, request: TokenizationRequest) -> TokenizationRequestResult:
         tokenizer = self.tokenizer
@@ -276,7 +280,8 @@ def run_entry(description, pad_to_seq_len, args):
     ensure_directory_exists(eval_cache_path)
 
     ##### Adapter #####
-    tokenizer_service = OptTokenizer("facebook/opt-30b")
+    #tokenizer_service = OptTokenizer("facebook/opt-30b")
+    tokenizer_service = OptTokenizer(args.model)
     tokenizer = tokenizer_service.tokenizer
     adapter = AdapterFactory.get_adapter(run_spec.adapter_spec, tokenizer_service)
 
