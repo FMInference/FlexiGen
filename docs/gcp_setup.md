@@ -1,6 +1,6 @@
 ```
 sudo apt update
-sudo apt install build-essential openmpi-bin
+sudo apt install build-essential openmpi-bin wget build-essential git
 
 wget https://developer.download.nvidia.com/compute/cuda/11.6.0/local_installers/cuda_11.6.0_510.39.01_linux.run
 sudo sh cuda_11.6.0_510.39.01_linux.run
@@ -22,6 +22,7 @@ cd FlexGen
 pip3 install -e .
 
 cd FlexGen/benchmark/third_party/DeepSpeed
+sudo apt install libaio-dev
 pip3 install -e .
 
 cd FlexGen/benchmark/third_party/transformers
