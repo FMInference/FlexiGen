@@ -1,5 +1,5 @@
 """
-Run the  from HELM.
+Run a scenario from HELM.
 
 See also: https://crfm.stanford.edu/helm/
 helm package version: 0.2.1
