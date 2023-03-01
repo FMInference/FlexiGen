@@ -30,7 +30,7 @@ def main(args):
                     args.percent[2], args.percent[3],
                     args.percent[4], args.percent[5],
                     overlap=True, sep_layer=True, pin_weight=args.pin_weight,
-                    cpu_cache_compute=False, attn_sparsity=1.0,
+                    cpu_cache_compute=args.cpu_cache_compute, attn_sparsity=1.0,
                     compress_weight=args.compress_weight,
                     comp_weight_config=CompressionConfig(
                         num_bits=4, group_size=64,
@@ -88,6 +88,7 @@ if __name__ == "__main__":
          "the percentage of activations on CPU")
     parser.add_argument("--pin-weight", type=str2bool, nargs="?",
         const=True, default=True)
+    parser.add_argument("--cpu-cache-compute", action="store_true")
     parser.add_argument("--compress-weight", action="store_true",
         help="Whether to compress weight.")
     parser.add_argument("--compress-cache", action="store_true",

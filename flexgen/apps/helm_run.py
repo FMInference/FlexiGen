@@ -1,14 +1,17 @@
 """
-Run the MMLU (Massive Multitask Language Understanding) scenario from HELM.
+Run the  from HELM.
 
 See also: https://crfm.stanford.edu/helm/
 helm package version: 0.2.1
 """
 import argparse
 from dataclasses import asdict, replace
-import os
 import json
+import os
+import time
 
+from flexgen.flex_opt import (Policy, OptLM, ExecutionEnv, CompressionConfig,
+        str2bool)
 from helm.benchmark.presentation.run_entry import RunEntry
 from helm.benchmark.run import run_entries_to_run_specs
 from helm.benchmark.run_specs import (ScenarioSpec, RunSpec, get_summarization_adapter_spec,
@@ -22,9 +25,8 @@ from helm.common.request import Request, RequestResult, Sequence, Token
 from helm.common.tokenization_request import (TokenizationRequestResult,
     TokenizationRequest, TokenizationToken)
 from helm.proxy.clients.client import truncate_sequence
-from flexgen.flex_opt import (Policy, OptLM, ExecutionEnv, CompressionConfig,
-        str2bool)
 import numpy as np
+from tqdm import tqdm
 from transformers import AutoTokenizer
 
 
@@ -99,6 +101,7 @@ def get_hf_generation_args(request, tokenizer):
         for key in raw_request
         if key not in ["engine", "prompt", "echo_prompt", "stop_sequences"]
     }
+    print(f"relevant_raw_request: {relevant_raw_request}")
 
     return relevant_raw_request
 
@@ -145,7 +148,7 @@ def execute(scenario_state, tokenizer, effective_bs, pad_to_seq_len):
                     args.percent[2], args.percent[3],
                     args.percent[4], args.percent[5],
                     overlap=True, sep_layer=True, pin_weight=args.pin_weight,
-                    cpu_cache_compute=False, attn_sparsity=1.0,
+                    cpu_cache_compute=args.cpu_cache_compute, attn_sparsity=1.0,
                     compress_weight=args.compress_weight,
                     comp_weight_config=CompressionConfig(
                         num_bits=4, group_size=64,
@@ -155,13 +158,17 @@ def execute(scenario_state, tokenizer, effective_bs, pad_to_seq_len):
                         num_bits=4, group_size=64,
                         group_dim=2, symmetric=False))
 
+    print(f"Init weights begin.")
+    tic = time.time()
     model = OptLM(args.model, env, args.path, policy)
+    print(f"Init weights end. Elapsed: {time.time() - tic:.2f} s", flush=True)
 
     # Generate
-    print("Generate...")
+    print(f"Generate begin. #sequences: {len(batches) * effective_bs}")
+    tic = time.time()
     input_ids_batches = []
     output_ids_batches = []
-    for batch in batches:
+    for batch in tqdm(batches):
         input_ids_tmp = batch["input_ids"]
         output_ids_tmp = model.generate(
             input_ids_tmp,
@@ -171,6 +178,7 @@ def execute(scenario_state, tokenizer, effective_bs, pad_to_seq_len):
             stop=generation_args.get("eos_token_id", None))
         input_ids_batches.append(input_ids_tmp)
         output_ids_batches.append(output_ids_tmp)
+    print(f"Generate end. Elapsed: {time.time() - tic:.2f} s", flush=True)
 
     input_ids = np.concatenate(input_ids_batches)
     output_ids = np.concatenate(output_ids_batches)
@@ -253,6 +261,7 @@ def execute(scenario_state, tokenizer, effective_bs, pad_to_seq_len):
 
 def run_entry(description, pad_to_seq_len, args):
     effective_bs = args.gpu_batch_size * args.num_gpu_batches
+    parallelism = 4
 
     ##### RunSpec #####
     run_entries = [RunEntry(description, priority=1, groups=None)]
@@ -283,12 +292,12 @@ def run_entry(description, pad_to_seq_len, args):
 
     # Data preprocessing
     instances = DataPreprocessor(run_spec.data_augmenter_spec).preprocess(
-        instances, parallelism=1
+        instances, parallelism=parallelism
     )
-    scenario_state = adapter.adapt(instances, parallelism=1)
+    scenario_state = adapter.adapt(instances, parallelism=parallelism)
 
     ##### Execute #####
-    if pad_to_seq_len == "auto":
+    if pad_to_seq_len is None:
         pad_to_seq_len = adapter.window_service.max_sequence_length - run_spec.adapter_spec.max_tokens
     scenario_state = execute(scenario_state, tokenizer, effective_bs, pad_to_seq_len)
 
@@ -304,7 +313,7 @@ def run_entry(description, pad_to_seq_len, args):
             scenario_state,
             tokenizer_service,
             eval_cache_path,
-            parallelism=1,
+            parallelism=parallelism,
         )
         stats.extend(metric_result.aggregated_stats)
         per_instance_stats.extend(metric_result.per_instance_stats)
@@ -338,18 +347,13 @@ def run_entry(description, pad_to_seq_len, args):
 
 
 def main(args):
-    entries = [
-        # (description, pad_to_seq_len)
-        ("mmlu:model=together/opt-66b,subject=abstract_algebra,data_augmentation=canonical", 512)
-        #("summarization_xsum_sampled:model=text,temperature=0.3,device=cpu", "auto")
-    ]
-
-    for description, pad_to_seq_len in entries:
-        run_entry(description, pad_to_seq_len, args)
+    run_entry(args.description, args.pad_to_seq_len, args)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument("--description", type=str, required=True)
+    parser.add_argument("--pad-to-seq-len", type=int)
     parser.add_argument("--model", type=str, default="facebook/opt-1.3b",
         help="The model name.")
     parser.add_argument("--path", type=str, default="~/opt_weights",
@@ -372,6 +376,7 @@ if __name__ == "__main__":
          "the percentage of activations on CPU")
     parser.add_argument("--pin-weight", type=str2bool, nargs="?",
         const=True, default=True)
+    parser.add_argument("--cpu-cache-compute", action="store_true")
     parser.add_argument("--compress-weight", action="store_true",
         help="Whether to compress weight.")
     parser.add_argument("--compress-cache", action="store_true",
