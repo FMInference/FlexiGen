@@ -24,21 +24,20 @@ if __name__ == "__main__":
         # 2
         "synthetic_reasoning_natural:model=text_code,difficulty=easy",
         # 21
-        "babi_qa:model=text_code,task=1"
+        "babi_qa:model=text_code,task=1",
         # 3
-        "dyck_language:model=text_code,num_parenthesis_pairs=2"
+        "dyck_language:model=text_code,num_parenthesis_pairs=2",
         # 70
         "math:model=text_code,subject=number_theory,level=1,use_official_examples=True",
         # 1
         "gsm:model=text_code",
-        # 1
-        "legal_support:model=text_code",
     ]
 
     descriptions = [
+        "legal_support:model=text_code",
     ]
 
-    torun = passed
+    torun = descriptions
     for i, des in enumerate(torun):
         print("=" * 10 + f" {i+1}/{len(torun)} : {des} " + "=" * 10)
         cmd = (f"python3 helm_run.py --description {des} "
