@@ -38,6 +38,11 @@ python3 bench_suite.py 175b_1x1_comp
 
 ## Distributed GPUs
 
+### Requirements
+```
+sudo apt install openmpi-bin
+```
+
 ### OPT-6.7B
 ```
 # 1 node with 4 GPUs
