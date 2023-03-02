@@ -1,10 +1,8 @@
 # Motivation: Throughput-Oriented Systems
 This project focuses on throughput-oriented large language model (LLM) generative inference when limited GPU memory is available.
-LLMs are getting used in new tasks where many inputs can be batched together, such as benchmarking, information extraction, data wrangling, and form processing. These tasks are common in machine learning and hold significant importance, but foundational models have not had a massive impact on them.
-We suspect this is because not enough effort has been put into these throughput-oriented scenarios for foundational models, and we want to initiate this study.
-In the real world, data from such tasks can be sensitive and confidential, such as data from hospitals, banks, and funds.
-As computation infrastructures in such organizations are often outdated, abundant GPU resources are scarce.
-Combining all those concerns, we want to initiate this study of high-throughput LLM inference with limited resources.
+LLMs are getting used in new tasks where many inputs can be batched together, such as benchmarking, information extraction, data wrangling, and form processing, but foundational models have not had a massive impact on them mainly due to limitations on computational resources and privacy concerns.
+For example, in the real world, data from such tasks can be sensitive and confidential, such as data from hospitals, banks, and funds. As computation infrastructures in such organizations are often outdated, expensive GPU resources are scarce.
+The above motivates us to initiate this study of high-throughput LLM inference with limited resources.
 Another reason for targeting high throughput is that we can significantly increase throughput by trading off latency, especially in memory-limited cases, and the tasks we mentioned above are usually not latency sensitive.
 
 The goal of this project is to create a high-throughput system to enable new and exciting applications of foundational models in these tasks on low-cost hardware, such as a single commodity GPU, instead of expensive systems.
