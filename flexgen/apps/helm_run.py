@@ -140,7 +140,7 @@ def get_batches(scenario_state, tokenizer, batch_size, pad_to_seq_len):
     assert len(input_ids.shape) == 2, f"Please use a longer pad_to_seq_len. current = {pad_to_seq_len}"
     max_seq_len = max(np.sum(input_ids != tokenizer.pad_token_id, axis=1))
     if max_seq_len != pad_to_seq_len:
-        pad_to_seq_len = min(int(math.ceil(max_seq_len / 512) * 512), pad_to_seq_len)
+        pad_to_seq_len = min(int(math.ceil(max_seq_len / 256) * 256), pad_to_seq_len)
         input_ids = tokenizer(prompts, padding="max_length",
                               return_tensors="np",
                               max_length=pad_to_seq_len).input_ids
