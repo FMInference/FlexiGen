@@ -315,6 +315,7 @@ def run_entry(description, pad_to_seq_len, args):
     print(run_spec)
     scenario = create_scenario(run_spec.scenario_spec)
     scenario.output_path = f"data/{run_spec.name}"
+    os.makedirs(scenario.output_path, exist_ok=True)
     instances = scenario.get_instances()
 
     # Give each instance a unique ID
