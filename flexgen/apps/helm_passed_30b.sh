@@ -1,4 +1,4 @@
-model=facebook/opt-30b
+model=facebook/opt-iml-30b
 
 # WikiFact (plaintiff), 10m
 time python3 helm_run.py --description wikifact:model=text,k=5,subject=plaintiff --model $model --percent 20 80 0 100 0 100 --gpu-batch-size 96 --num-gpu-batches 3 --cpu --max-eval-instance 96  # 96
@@ -17,3 +17,6 @@ time python3 helm_run.py --description synthetic_reasoning_natural:model=togethe
 
 # Synthetic reasoning (natural language), 114m
 time python3 helm_run.py --description synthetic_reasoning_natural:model=together/opt-175b,difficulty=easy --model $model --percent 20 80 0 100 0 100 --gpu-batch-size 36 --num-gpu-batches 4 --cpu --max-eval-instance 515  # 515
+
+# XSUM, 1100m
+time python3 helm_run.py --description summarization_xsum_sampled:model=text,temperature=0.3,device=cpu --model $model --percent 0 100 0 100 0 100 --gpu-batch-size 8 --num-gpu-batches 4 --cpu --max-eval-instance 518  # 518
