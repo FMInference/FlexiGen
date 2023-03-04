@@ -298,6 +298,7 @@ def run_entry(description, pad_to_seq_len, args):
     run_specs = run_entries_to_run_specs(
         run_entries=run_entries,
         max_eval_instances=args.max_eval_instances,
+        num_train_trials=3,
     )
     run_spec = run_specs[0]
     run_path: str = os.path.join(args.run_path, run_spec.name)
