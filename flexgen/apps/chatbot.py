@@ -1,5 +1,10 @@
 # Copyright (c) Meta Platforms, Inc. and affiliates.
 # This software may be used and distributed according to the terms of the GNU General Public License version 3.
+"""
+For Apple Silicon Mac
+python3 apps/chatbot.py --model facebook/opt-1.3b --percent 100 0 100 0 100 0 --platform cpu
+
+"""
 
 import argparse
 import time
