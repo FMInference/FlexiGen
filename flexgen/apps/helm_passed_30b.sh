@@ -1,9 +1,9 @@
 model=facebook/opt-iml-30b
 
-# WikiFact (plaintiff), 10m
+# WikiFact (plaintiff), 11m
 time python3 helm_run.py --description wikifact:model=text,k=5,subject=plaintiff --model $model --percent 20 80 0 100 0 100 --gpu-batch-size 96 --num-gpu-batches 3 --cpu --max-eval-instance 96  # 96
 
-# WikiFact (instance_of), 60m
+# WikiFact (instance_of), 61m
 time python3 helm_run.py --description wikifact:model=text,k=5,subject=instance_of --model $model --percent 20 80 0 100 0 100 --gpu-batch-size 96 --num-gpu-batches 3 --cpu --max-eval-instance 850  # 850
 
 # MMLU (abstract_algebra), 34m
@@ -12,10 +12,10 @@ time python3 helm_run.py --description mmlu:model=together/opt-175b,subject=abst
 # MMLU (us_foreign_policy), 35m
 time python3 helm_run.py --description mmlu:model=together/opt-175b,subject=us_foreign_policy,data_augmentation=canonical --model $model --percent 20 80 0 100 0 100 --gpu-batch-size 48 --num-gpu-batches 3 --cpu --max-eval-instance 100  # 100
 
-# Synthetic reasoning (abstract symbols), 113m
-time python3 helm_run.py --description synthetic_reasoning_natural:model=together/opt-175b,difficulty=easy --model $model --percent 20 80 0 100 0 100 --gpu-batch-size 36 --num-gpu-batches 4 --cpu --max-eval-instance 515  # 515
+# Synthetic reasoning (abstract symbols), 114m
+time python3 helm_run.py --description synthetic_reasoning:model=together/opt-175b,mode=pattern_match --model $model --percent 20 80 0 100 0 100 --gpu-batch-size 36 --num-gpu-batches 4 --cpu --max-eval-instance 515  # 515
 
-# Synthetic reasoning (natural language), 114m
+# Synthetic reasoning (natural language), 115m
 time python3 helm_run.py --description synthetic_reasoning_natural:model=together/opt-175b,difficulty=easy --model $model --percent 20 80 0 100 0 100 --gpu-batch-size 36 --num-gpu-batches 4 --cpu --max-eval-instance 515  # 515
 
 # XSUM, 1100m
