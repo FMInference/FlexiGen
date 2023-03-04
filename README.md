@@ -1,11 +1,11 @@
 # Motivation: Throughput-Oriented Systems
-This project focuses on throughput-oriented large language model (LLM) generative inference when limited GPU memory is available.
-LLMs are getting used in new tasks where many inputs can be batched together, such as benchmarking, information extraction, data wrangling, and form processing, but foundational models have not had a massive impact on them mainly due to limitations on computational resources and privacy concerns.
-For example, in the real world, data from such tasks can be sensitive and confidential, such as data from hospitals, banks, and funds. As computation infrastructures in such organizations are often outdated, expensive GPU resources are scarce.
+This project focuses on throughput-oriented large language model (LLM) generative inference in situations of limited GPU memory.
+LLMs are used in new tasks where many inputs can be batched together, such as benchmarking, information extraction, data wrangling, and form processing, but foundation models have not had as massive of an impact, mainly due to limitations on computational resources and privacy concerns.
+For example, in the real world, data from such tasks is sensitive and confidential, such as data from hospitals, banks, and funds. As computation infrastructure in these organizations are often outdated, expensive GPU resources are even more scarce.
 The above motivates us to initiate this study of high-throughput LLM inference with limited resources.
 Another reason for targeting high throughput is that we can significantly increase throughput by trading off latency, especially in memory-limited cases, and the tasks we mentioned above are usually not latency sensitive.
 
-The goal of this project is to create a high-throughput system to enable new and exciting applications of foundational models in these tasks on low-cost hardware, such as a single commodity GPU, instead of expensive systems.
+The goal of this project is to create a high-throughput system to enable new and exciting applications of foundation models running on low-cost hardware, such as a single commodity GPU, instead of expensive systems.
 We demonstrate an example use case on the [HELM](https://crfm.stanford.edu/helm) benchmark.
 
 ----------
@@ -16,15 +16,15 @@ This project was made possible thanks to a collaboration with
 
 ----------
 
-# FlexGen (Still Working in Progress!)
-FlexGen is a high-throughput generation engine for running large language models with limited GPU memory. FlexGen allows **high-throughput** generation by IO-efficient offloading, compression and **large effective batch sizes**.
+# FlexGen (Still a Work in Progress!)
+FlexGen is a high-throughput generation engine for running large language models with limited GPU memory. FlexGen allows **high-throughput** generation by IO-efficient offloading, compression, and **large effective batch sizes**.
 
 ⚡ **High-Throughput Offloading**.  
-Higher-throughput generation than other offloading-based systems (e.g., Hugging Face Accelerate, DeepSpeed Zero-Inference) - sometimes by orders of magnitude. This can be useful for batch inference scenarios, such as benchmarking (e.g., [HELM](https://github.com/stanford-crfm/helm)) and [data wrangling](https://arxiv.org/abs/2205.09911).
+Higher-throughput generation versus other offloading-based systems (e.g., Hugging Face Accelerate, DeepSpeed Zero-Inference) - sometimes by orders of magnitude. This can be useful for batch inference scenarios, such as benchmarking (e.g., [HELM](https://github.com/stanford-crfm/helm)) and [data wrangling](https://arxiv.org/abs/2205.09911).
 
-❌ **Limitation**.  
+❌ **Limitations**.  
 As an offloading-based system running on weak GPUs, FlexGen also has its limitations.
-FlexGen can be significantly slower than the case when you have enough powerful GPUs to hold the whole model, especially for small-batch cases.
+FlexGen can be significantly slower than the case when you have enough powerful GPUs to hold the entire model, especially for small-batch cases.
 FlexGen is mostly optimized for throughput-oriented batch processing settings (e.g., classifying or extracting information from many documents in batches), on single GPUs.
 
 ## Install
@@ -52,14 +52,14 @@ python3 -m flexgen.apps.helm_run --description mmlu:model=text,subject=abstract_
 
 ## Performance Benchmark
 ### Generation Throughput (token/s)
-The corresponding effective batch sizes are in the bracket. Please see [here](benchmark/batch_size_table.md) for more details.
+The corresponding effective batch sizes are in parentheses. Please see [here](benchmark/batch_size_table.md) for more details.
 | System | OPT-6.7B | OPT-30B | OPT-175B |
 | ------ | -------- | ------- | -------- |
-| Hugging Face Accelerate   | 25.12 (2 on gpu) | 0.62 (8 on cpu	) | 0.01 (2 on disk) |
-| DeepSpeed ZeRO-Inference | 9.28 (16 on cpu)  | 0.60 (4 on cpu) | 0.01 (1 on disk) |
+| Hugging Face Accelerate   | 25.12 (2 on GPU) | 0.62 (8 on CPU) | 0.01 (2 on disk) |
+| DeepSpeed ZeRO-Inference | 9.28 (16 on CPU)  | 0.60 (4 on CPU) | 0.01 (1 on disk) |
 | Petals\*                 | -     | -    | 0.05 |
-| FlexGen                  | 25.26 (2 on gpu) | 7.32 (144 on cpu) | 0.69 (256 on disk) |
-| FlexGen with Compression | **29.12** (72 on gpu) | **8.38** (512 on cpu) | **1.12** (144 on cpu) |
+| FlexGen                  | 25.26 (2 on GPU) | 7.32 (144 on CPU) | 0.69 (256 on disk) |
+| FlexGen with Compression | **29.12** (72 on GPU) | **8.38** (512 on CPU) | **1.12** (144 on CPU) |
 
 - Hardware: an NVIDIA T4 (16GB) instance on GCP with 208GB of DRAM and 1.5TB of SSD.  
 - Workload: input sequence length = 512, output sequence length = 32. The batch size is tuned to **a large value** that maximizes the generation throughput for each system.
