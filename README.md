@@ -1,4 +1,4 @@
-# FlexGen (Still Working in Progress!)
+# FlexGen (Still Work in Progress!)
 
 FlexGen is a high-throughput generation engine for running large language models with limited GPU memory. FlexGen allows **high-throughput** generation by IO-efficient offloading, compression and **large effective batch sizes**.
 
@@ -8,20 +8,23 @@ In recent years, large language models (LLMs) have shown great performance acros
 wide range of tasks. Increasingly, LLMs have been applied not only to interactive 
 applications (such as chat), but also to many "back-of-house" tasks.
 These tasks include benchmarking, information extraction, data wrangling, and form processing.
-One key characteristic of these applications is that they are **throughput-orientied**: they require
-running LLM inferences over millions of tokens in batch and are less sensitive on latency but 
-more on the throughput (token/seconds over the total running period, which can be hours).
-Throughput-oriented workloads provide opportunities to trading off latency in order to improve 
-throughputs, which make it easier to take advantage of low-cost hardware commodity GPUs. 
+
+One key characteristic of these applications is that they are **throughput-oriented**: they require
+running LLM inferences over millions of tokens in batches, e.g., all the private documents in a company's
+corpus, or all the tasks in the [HELM](https://crfm.stanford.edu/helm/latest/) benchmark.
+These workloads are less sensitive to latency --- the user starts up a job and lets it run overnight ---
+but increasing throughput is critical for reducing costs.
+Thoughput is a measure of tokens processed per second over the job's entire runtime (which can be hours).
+Throughput-oriented workloads provide opportunities to trading off latency for higher throughput, which
+makes it easier to take advantage of low-cost commodity GPUs. 
 
 The goal of FlexGen is to create a high-throughput system to enable new and exciting applications of 
-foundational models in these tasks on low-cost hardware, such as a single commodity GPU, instead of expensive systems.
-Here are some examples of how FlexGen can be used:
-
-- *Data wrangling*: Running data wrangling tasks (as described in [Can Foundation Models Wrangle Your Data?
+foundation models to throughput-oriented tasks on low-cost hardware, such as a single commodity GPU
+instead of expensive systems.
+Here are some examples of high-throughput workloads that we can run _on a single commodity GPU_ with FlexGen:
+* *Data wrangling*: Running data wrangling tasks (as described in [Can Foundation Models Wrangle Your Data?
 ](https://arxiv.org/abs/2205.09911)). See [XXX](XXX) for an example.
-
-- *Benchmarking*: Running a subset of [HELM](https://crfm.stanford.edu/helm/latest/) tasks. See [XXX](XXX)
+* *Benchmarking*: Running a subset of [HELM](https://crfm.stanford.edu/helm/latest/) tasks. See [XXX](XXX)
 for an example.
 
 ❌ **Limitation**. As an offloading-based system running on weak GPUs, FlexGen also has its limitations.
@@ -70,7 +73,7 @@ XXX
 
 ## Performance Benchmark
 ### Generation Throughput (token/s)
-The corresponding effective batch sizes are in the bracket. Please see [here](benchmark/batch_size_table.md) for more details.
+The corresponding effective batch sizes are in parentheses. Please see [here](benchmark/batch_size_table.md) for more details.
 | System | OPT-6.7B | OPT-30B | OPT-175B |
 | ------ | -------- | ------- | -------- |
 | Hugging Face Accelerate   | 25.12 (2 on gpu) | 0.62 (8 on cpu	) | 0.01 (2 on disk) |
