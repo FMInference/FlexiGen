@@ -70,5 +70,6 @@ How to [reproduce](benchmark/flexgen).
 ## Roadmap
 We plan to work on the following features.
 
+- [ ] Optimize the performance for multip-GPUs on the same machine 
 - [ ] Support more models (BLOOM, CodeGen, GLM)
 - [ ] Release the cost model and policy optimizer
