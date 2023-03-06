@@ -2,7 +2,12 @@
 # This software may be used and distributed according to the terms of the GNU General Public License version 3.
 """
 For Apple Silicon Mac
-python3 apps/chatbot.py --model facebook/opt-1.3b --percent 100 0 100 0 100 0 --platform cpu
+o:
+python3 apps/chatbot.py --model facebook/opt-1.3b --platform cpu
+python3 apps/chatbot.py --model facebook/opt-2.7b --platform cpu
+x:
+python3 apps/chatbot.py --model facebook/opt-1.3b --platform mps:0
+python3 apps/chatbot.py --model facebook/opt-6.7b --percent 100 0 100 0 100 0 --platform mps:0
 
 """
 
@@ -65,13 +70,13 @@ def run_chat(args):
     )
 
     # Chat
-    print("\n================================== Start\n")
+    # print("\n================================== Start\n")
     print(context, end="")
     while True:
         inp = input("Human: ")
         if not inp:
             print("exit...")
-            print("\n================================== End\n")
+            # print("\n================================== End\n")
             break
 
         start_time = time.time()
@@ -93,6 +98,10 @@ def run_chat(args):
         except ValueError:
             outputs += "\n"
             index = outputs.index("\n", len(context))
+
+        # outputs: All text
+        # context: Last text
+        # index: len(context) + len(reply from model)
         
         outputs = outputs[:index + 1]
         print(outputs[len(context):].strip("\n"), end="")
