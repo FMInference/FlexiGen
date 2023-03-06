@@ -8,6 +8,7 @@ python3 apps/chatbot.py --model facebook/opt-2.7b --platform cpu
 x:
 python3 apps/chatbot.py --model facebook/opt-1.3b --platform mps:0
 python3 apps/chatbot.py --model facebook/opt-6.7b --percent 100 0 100 0 100 0 --platform mps:0
+--compress-weight
 
 """
 
