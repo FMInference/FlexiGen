@@ -183,29 +183,6 @@ def get_tokenizer(name):
     return tokenizer
 
 
-def get_batches(tokenizer, batch_size, pad_to_seq_len, prompts):
-    # Tokenize
-    input_ids = tokenizer(prompts, padding="max_length",
-                          return_tensors="np",
-                          max_length=pad_to_seq_len).input_ids
-    assert len(input_ids.shape) == 2, "Please use a longer pad_to_seq_len"
-    print(f"Max sequence length: {max(np.sum(input_ids != tokenizer.pad_token_id, axis=1))}, "
-          f"Pad to sequences length: {pad_to_seq_len}")
-
-    # Pad and divide into batches
-    n_prompts = len(prompts)
-    if n_prompts % batch_size != 0:
-        input_ids = np.concatenate((input_ids, np.full((batch_size - n_prompts % batch_size,
-            input_ids.shape[1]), tokenizer.pad_token_id, dtype=input_ids.dtype)))
-
-    num_batches = len(input_ids) // batch_size
-    assert len(input_ids) % batch_size == 0
-    return [
-        {"input_ids": input_ids[i * batch_size: (i+1) * batch_size]}
-        for i in range(num_batches)
-    ]
-
-
 def single_query_test(args, task_instruction, test_data, task, pd_data_files, test_file):
     # Initialize environment
     tokenizer = get_tokenizer(args.model)
@@ -276,14 +253,17 @@ def single_query_test(args, task_instruction, test_data, task, pd_data_files, te
             input_ids_tmp = tokenizer(prompt(queries[idx]), padding="max_length",
                                         return_tensors="np",
                                         max_length=args.pad_to_seq_len).input_ids
+            print(input_ids_tmp.shape)
             output_ids_tmp = model.generate(input_ids_tmp,
                                             do_sample=True,
                                             temperature=args.temperature,
                                             max_new_tokens=args.max_tokens,
                                             stop=args.stop_token)
+            input_strs = tokenizer.batch_decode(input_ids_tmp, skip_special_tokens=True)
             output_strs = tokenizer.batch_decode(output_ids_tmp, skip_special_tokens=True)
-            logger.info(f"====> {output_strs[0]} <====")
-            preds.extend(output_strs)
+            anwsers = [ output_strs[i][len(input_strs[i]):] for i in range(len(input_strs))]
+            logger.info(f"====> {anwsers[0]} <====")
+            preds.extend(anwsers)
             idx += 1
             logger.info(f"Current Inference query elapsed: {time.time() - tic:.2f} s")
         # Save trial predictions
@@ -361,7 +341,6 @@ def batch_query_test(args, task_instruction, test_data, task, pd_data_files, tes
     model = OptLM(args.model, env, args.path, policy)
     print(f"Init weights end. Elapsed: {time.time() - tic:.2f} s", flush=True)
 
-    
     if args.add_task_instruction:
         prompt = lambda x: f"{task_instruction} {x}"
     else:
@@ -401,24 +380,26 @@ def batch_query_test(args, task_instruction, test_data, task, pd_data_files, tes
         # Run a few for printing -- they are cached
         prompt_strs = []
         for _ in range(args.num_run):
-            logger.info(prompt(queries[idx]))
+            if idx == 0:
+                logger.info(f"This is a sample prompt: {prompt(queries[idx])}")
             prompt_strs.append(prompt(queries[idx]))
             idx += 1
             
         tic = time.time()
         
         input_ids_tmp = tokenizer(prompt_strs, padding="max_length",
-                                    return_tensors="np",
-                                    max_length=args.pad_to_seq_len).input_ids
+                                  return_tensors="np",
+                                  max_length=args.pad_to_seq_len).input_ids
         output_ids_tmp = model.generate(input_ids_tmp,
                                         do_sample=True,
                                         temperature=args.temperature,
                                         max_new_tokens=args.max_tokens,
                                         stop=args.stop_token)
-        preds = tokenizer.batch_decode(output_ids_tmp, skip_special_tokens=True)
-        
         toc = time.time()
-        # TODO check this, I worry this is not the right throughput. 
+        input_strs = tokenizer.batch_decode(input_ids_tmp, skip_special_tokens=True)
+        output_strs = tokenizer.batch_decode(output_ids_tmp, skip_special_tokens=True)
+        preds = [ output_strs[i][len(input_strs[i]):] for i in range(len(input_strs))]
+        
         throughput = args.num_run * args.max_tokens/(time.time() - tic)
         print(f"Batch inference run end. Elapsed: { toc - tic:.2f} s, Throughput: {throughput:.2f} token/s")
         # Save trial predictions
@@ -431,7 +412,7 @@ def batch_query_test(args, task_instruction, test_data, task, pd_data_files, tes
 
         logger.info(
             f"Metrics Trial {trial_num}\n"
-            f"Prec: {prec:.3f} Recall: {rec:.3f} Acc: {acc:.3f} F1: {f1:.3f}"
+            f"Prec: {prec:.3f} Recall: {rec:.3f} Acc: {acc:.3f} F1: {f1:.3f} FlexGen Throughput: {throughput:.3f}"
         )
         trial_metrics["rec"].append(rec)
         trial_metrics["prec"].append(prec)
