@@ -181,7 +181,8 @@ class TorchCompressedDevice:
         right_indices = (
             tuple(slice(0, x) for x in data.shape[:group_dim+1]) +
             (slice(1, data.shape[group_dim+1], 2),))
-        data[left_indices] = packed.bitwise_right_shift(4)
+        # @kotatsurin addressed
+        data[left_indices] = packed.to('cpu').bitwise_right_shift(4)
         data[right_indices] = packed.bitwise_and(0xF)
 
         # Dequantize
