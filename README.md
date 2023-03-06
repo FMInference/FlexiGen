@@ -57,7 +57,7 @@ The corresponding effective batch sizes are in the bracket. Please see [here](be
 | ------ | -------- | ------- | -------- |
 | Hugging Face Accelerate   | 25.12 (2 on gpu) | 0.62 (8 on cpu	) | 0.01 (2 on disk) |
 | DeepSpeed ZeRO-Inference | 9.28 (16 on cpu)  | 0.60 (4 on cpu) | 0.01 (1 on disk) |
-| Petals\*                 | -     | -    | 0.05 |
+| Petals                 | 8.25     | 2.84    | 0.08 |
 | FlexGen                  | 25.26 (2 on gpu) | 7.32 (144 on cpu) | 0.69 (256 on disk) |
 | FlexGen with Compression | **29.12** (72 on gpu) | **8.38** (512 on cpu) | **1.12** (144 on cpu) |
 
