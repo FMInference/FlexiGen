@@ -103,8 +103,13 @@ def init_weight_list(weight_specs, policy, env):
         home = get_choice(mid_percent * 100, dev_percents, dev_choices)
         shape, dtype, filename = weight_specs[i]
 
-        pin_memory = policy.pin_weight
-        compress = policy.compress_weight
+        # @gravitino addressed (20230306)
+        if len(shape) < 2:
+            pin_memory = True if env.gpu.device_type != DeviceType.CPU else False
+            compress = False
+        else:
+            pin_memory = policy.pin_weight
+            compress = policy.compress_weight
 
         if not compress:
             weight = home.allocate(shape, dtype, pin_memory=pin_memory)

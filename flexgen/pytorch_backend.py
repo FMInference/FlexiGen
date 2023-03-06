@@ -887,6 +887,13 @@ def general_copy(dst: TorchTensor, dst_indices: Tuple[slice],
         dst = dst.data[dst_indices] if dst_indices else dst.data
         src = src.pin_memory()
         dst.copy_(src, non_blocking=True)
+    # @gravitino addressed (20230306)
+    elif (src.device.device_type == DeviceType.MPS or 
+          dst.device.device_type == DeviceType.MPS):
+        # Workaround for the PyTorch MPS bug of the non-blocking processing of copy()
+        src = src.data[src_indices] if src_indices else src.data
+        dst = dst.data[dst_indices] if dst_indices else dst.data
+        dst.copy_(src, non_blocking=False)
     else:
         # The normal path
         src = src.data[src_indices] if src_indices else src.data
