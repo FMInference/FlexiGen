@@ -49,8 +49,9 @@ def run_chat(args):
 
     # Model
     print("Initialize...")
-    tokenizer = AutoTokenizer.from_pretrained(args.model, use_fast=False)
+    tokenizer = AutoTokenizer.from_pretrained(args.model, padding_side="left")
     tokenizer.add_bos_token = False
+    stop = tokenizer("\n").input_ids[0]
 
     opt_config = get_opt_config(args.model, dtype=np.float32 if args.platform == "cpu" else np.float16)
     model_nm = OptLM(opt_config, env, args.path, policy)
@@ -77,7 +78,14 @@ def run_chat(args):
 
         context += "Human: " + inp + "\n"
         inputs = tokenizer([context])
-        output_ids = model_nm.generate(inputs.input_ids, max_new_tokens=args.gen_len, debug_mode=args.debug_mode, cut_gen_len=args.cut_gen_len, verbose=args.verbose)
+        output_ids = model_nm.generate(inputs.input_ids,
+                                        max_new_tokens=args.gen_len,
+                                        do_sample=True,
+                                        temperature=0.7,
+                                        stop=stop,
+                                        debug_mode=args.debug_mode,
+                                        cut_gen_len=args.cut_gen_len,
+                                        verbose=args.verbose)
         outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0]
 
         try:
@@ -88,7 +96,7 @@ def run_chat(args):
         
         outputs = outputs[:index + 1]
         print(outputs[len(context):].strip("\n"), end="")
-        print(f" [{time.time() - start_time:.2f}sec.]")
+        print(f" [{time.time() - start_time:.2f}s]")
         context = outputs
 
     # TODO: optimize the performance by reusing context cache and reducing redundant computation.
