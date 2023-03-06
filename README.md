@@ -12,7 +12,7 @@ These tasks include benchmarking, information extraction, data wrangling, and fo
 One key characteristic of these applications is that they are **throughput-oriented**: they require
 running LLM inferences over millions of tokens in batches, e.g., all the private documents in a company's
 corpus, or all the tasks in the [HELM](https://crfm.stanford.edu/helm/latest/) benchmark.
-These workloads are less sensitive to latency --- the user starts up a job and lets it run overnight ---
+These workloads are less sensitive to latency - the user starts up a job and lets it run overnight -
 but increasing throughput is critical for reducing costs.
 Thoughput is a measure of tokens processed per second over the job's entire runtime (which can be hours).
 Throughput-oriented workloads provide opportunities to trading off latency for higher throughput, which
