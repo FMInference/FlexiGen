@@ -2,15 +2,17 @@
 # This software may be used and distributed according to the terms of the GNU General Public License version 3.
 """
 For Apple Silicon Mac
-o:
+
 python3 apps/chatbot.py --model facebook/opt-1.3b --platform cpu
 python3 apps/chatbot.py --model facebook/opt-2.7b --platform mps:0
 python3 apps/chatbot.py --model facebook/opt-6.7b --platform mps:0
+python3 apps/chatbot.py --model facebook/opt-30b --compress-weight --platform mps:0
 
-x:
-python3 apps/chatbot.py --model facebook/opt-30b --platform mps:0
+python3 apps/chatbot.py --model facebook/opt-66b --compress-weight --platform mps:0
+
 --compress-weight
 --percent 100 0 100 0 100 0
+--gen-len 96
 
 """
 
