@@ -1,4 +1,4 @@
-# FlexGen (Still Work in Progress!)
+# FlexGen
 
 FlexGen is a high-throughput generation engine for running large language models with limited GPU memory. FlexGen allows **high-throughput** generation by IO-efficient offloading, compression and **large effective batch sizes**.
 
@@ -22,10 +22,8 @@ The goal of FlexGen is to create a high-throughput system to enable new and exci
 foundation models to throughput-oriented tasks on low-cost hardware, such as a single commodity GPU
 instead of expensive systems.
 Here are some examples of high-throughput workloads that we can run _on a single commodity GPU_ with FlexGen:
-* *Data wrangling*: Running data wrangling tasks (as described in [Can Foundation Models Wrangle Your Data?
-](https://arxiv.org/abs/2205.09911)). See [XXX](XXX) for an example.
-* *Benchmarking*: Running a subset of [HELM](https://crfm.stanford.edu/helm/latest/) tasks. See [XXX](XXX)
-for an example.
+* *Benchmarking*: Running a subset of [HELM](https://crfm.stanford.edu/helm/latest/) benchmark.
+* *Data wrangling*: Running [data wrangling](https://arxiv.org/abs/2205.09911).
 
 ❌ **Limitation**. As an offloading-based system running on weak GPUs, FlexGen also has its limitations.
 FlexGen can be significantly slower than the case when you have enough powerful GPUs to hold the whole model, especially for small-batch cases.
@@ -66,10 +64,7 @@ python3 -m flexgen.apps.helm_run --description mmlu:model=text,subject=abstract_
 
 ### Data Wrangling
 
-TODO: XXX <br/>
-XXX <br/>
-XXX <br/>
-XXX
+See [example](flexgen/apps/data_wrangle)
 
 ## Performance Benchmark
 ### Generation Throughput (token/s)
@@ -91,6 +86,6 @@ How to [reproduce](benchmark/flexgen).
 ## Roadmap
 We plan to work on the following features.
 
-- [ ] Optimize the performance for multip-GPUs on the same machine 
+- [ ] Optimize the performance for multiple GPUs on the same machine
 - [ ] Support more models (BLOOM, CodeGen, GLM)
 - [ ] Release the cost model and policy optimizer
