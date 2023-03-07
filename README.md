@@ -70,7 +70,7 @@ Note that only a subset of HELM scenarios is tested. See more tested scenarios [
 FlexGen benchmark can be launched with [SkyPilot](http://skypilot.co), a tool for launching ML jobs on any cloud.
 You can use a single command below to automatically launch the benchmark on any cloud with SkyPilot, after you setup your cloud account locally (check how to setup SkyPilot [here](https://skypilot.readthedocs.io/en/latest/getting-started/installation.html)).
 ```
-sky launch -c flexgen flexgen/apps/task.yaml
+sky launch -c flexgen --detach-setup flexgen/apps/task.yaml
 ```
 Note that you can replace the run section with any FlexGen command. You can log into the cluster running the job with `ssh flexgen` and terminate the cluster with `sky down flexgen`.
 

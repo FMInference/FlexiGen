@@ -16,5 +16,5 @@ python3 helm_run.py --description mmlu:model=text,subject=abstract_algebra,data_
 ### Run on any cloud with SkyPilot
 Run FlexGen benchmark on any cloud with [SkyPilot](http://skypilot.co).
 ```
-sky launch -c flexgen task.yaml
+sky launch -c flexgen --detach-setup task.yaml
 ```
