@@ -12,3 +12,9 @@ Run Massive Multitask Language Understanding (MMLU) scenario.
 ```
 python3 helm_run.py --description mmlu:model=text,subject=abstract_algebra,data_augmentation=canonical --pad-to-seq-len 512 --model facebook/opt-30b --percent 20 80 0 100 0 100 --gpu-batch-size 48 --num-gpu-batches 3 --max-eval-instance 100
 ```
+
+### Run on any cloud with SkyPilot
+Run FlexGen benchmark on any cloud with [SkyPilot](http://skypilot.co).
+```
+sky launch -c flexgen task.yaml
+```

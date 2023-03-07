@@ -11,6 +11,7 @@ setup: |
   echo Installing CUDA 11.6.0
   sudo sh cuda_11.6.0_510.39.01_linux.run --silent --toolkit
   
+  # Create conda environment
   conda create -y -n flexgen python=3.9
   conda activate flexgen
   pip install torch==1.12.1+cu116 torchvision==0.13.1+cu116 torchaudio==0.12.1 --extra-index-url https://download.pytorch.org/whl/cu116
@@ -22,6 +23,7 @@ setup: |
   pip install -e .
 
 run: |
+  # Run any FlexGen command
   conda activate flexgen
   # python3 -m flexgen.flex_opt --model facebook/opt-1.3b
   python3 -m flexgen.apps.helm_run --description mmlu:model=text,subject=abstract_algebra,data_augmentation=canonical --pad-to-seq-len 512 --model facebook/opt-30b --percent 20 80 0 100 0 100 --gpu-batch-size 48 --num-gpu-batches 3 --max-eval-instance 100
