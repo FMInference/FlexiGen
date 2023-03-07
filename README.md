@@ -21,9 +21,8 @@ makes it easier to take advantage of low-cost commodity GPUs.
 The goal of FlexGen is to create a high-throughput system to enable new and exciting applications of 
 foundation models to throughput-oriented tasks on low-cost hardware, such as a single commodity GPU
 instead of expensive systems.
-Here are some examples of high-throughput workloads that we can run _on a single commodity GPU_ with FlexGen:
-* *Benchmarking*: Running a subset of [HELM](https://crfm.stanford.edu/helm/latest/) benchmark.
-* *Data wrangling*: Running [data wrangling](https://arxiv.org/abs/2205.09911).
+
+See [examples](#examples) for we can run _on a single commodity GPU_ with FlexGen, such as benchmarking and data wrangling.
 
 ❌ **Limitation**. As an offloading-based system running on weak GPUs, FlexGen also has its limitations.
 FlexGen can be significantly slower than the case when you have enough powerful GPUs to hold the whole model, especially for small-batch cases.
@@ -54,24 +53,23 @@ pip install -e .
 ```
 
 ## Examples 
-
 ### HELM Benchmark 
 FlexGen can be integrated into [HELM](https://crfm.stanford.edu/helm), a language model benchmark framework, as its execution backend.
 You can use the commands below to run a Massive Multitask Language Understanding (MMLU) [scenario](https://crfm.stanford.edu/helm/latest/?group=mmlu) with a single T4 (16GB) GPU and 200GB of DRAM.
 ```
 python3 -m flexgen.apps.helm_run --description mmlu:model=text,subject=abstract_algebra,data_augmentation=canonical --pad-to-seq-len 512 --model facebook/opt-30b --percent 20 80 0 100 0 100 --gpu-batch-size 48 --num-gpu-batches 3 --max-eval-instance 100
 ```
+Note that only a subset of HELM scenarios is tested.
 
 ### Data Wrangling
-
-See [example](flexgen/apps/data_wrangle)
+You can run the examples in this paper, ['Can Foundation Models Wrangle Your Data?'](https://arxiv.org/abs/2205.09911), by following the instructions [here](flexgen/apps/data_wrangle).
 
 ## Performance Benchmark
 ### Generation Throughput (token/s)
 The corresponding effective batch sizes are in parentheses. Please see [here](benchmark/batch_size_table.md) for more details.
 | System | OPT-6.7B | OPT-30B | OPT-175B |
 | ------ | -------- | ------- | -------- |
-| Hugging Face Accelerate   | 25.12 (2 on GPU) | 0.62 (8 on CPU) | 0.01 (2 on disk) |
+| Hugging Face Accelerate  |  25.12 (2 on GPU) | 0.62 (8 on CPU) | 0.01 (2 on disk) |
 | DeepSpeed ZeRO-Inference | 9.28 (16 on CPU)  | 0.60 (4 on CPU) | 0.01 (1 on disk) |
 | Petals\*                 | -     | -    | 0.05 |
 | FlexGen                  | 25.26 (2 on GPU) | 7.32 (144 on CPU) | 0.69 (256 on disk) |
