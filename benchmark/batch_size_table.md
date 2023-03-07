@@ -31,5 +31,6 @@ We attach the generation throughput here for reference.
 
 ### About Petals
 We also include [Petals](https://arxiv.org/abs/2209.01188) as an additional baseline.
-We normalize the throughput reported in the Petals paper (from the case of 14 real servers in Europe and North America) by the number of used GPUs and get an effective per-GPU throughput of 0.68/14 ≈ 0.05 token/s.
-For a more comprehensive comparison with Petals, see Section 6.4 in our paper.
+We measure the results of running OPT hosted on 1, 4, and 24 T4 GPUs (in case of 6.7B, 30B, and 175B respectively) on GCP.
+We perform 6 parallel requests to the system and divide the throughput by the number of used GPUs in each case.
+For a more comprehensive comparison with Petals, see Section 6.3 in our paper.
