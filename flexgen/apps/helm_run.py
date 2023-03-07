@@ -7,6 +7,7 @@ helm package version: 0.2.1
 import argparse
 from dataclasses import asdict, replace
 import json
+import math
 import os
 import time
 
@@ -23,7 +24,7 @@ from helm.benchmark.runner import (create_scenario, AdapterFactory, with_instanc
     DataPreprocessor)
 from helm.common.request import Request, RequestResult, Sequence, Token
 from helm.common.tokenization_request import (TokenizationRequestResult,
-    TokenizationRequest, TokenizationToken)
+    TokenizationRequest, TokenizationToken, DecodeRequest, DecodeRequestResult)
 from helm.proxy.clients.client import truncate_sequence
 import numpy as np
 from tqdm import tqdm
@@ -67,6 +68,23 @@ class OptTokenizer:
             text=request.text,
             tokens=[TokenizationToken(value) for value in result["tokens"]],
             request_time=0,
+        )
+
+    def decode(self, request: DecodeRequest) -> DecodeRequestResult:
+        tokenizer = self.tokenizer
+
+
+        def do_it():
+            return {
+                "text": tokenizer.decode(
+                    request.tokens, clean_up_tokenization_spaces=request.clean_up_tokenization_spaces
+                )
+            }
+
+        result = do_it()
+
+        return DecodeRequestResult(
+            success=True, cached=False, text=result["text"], request_time=0,
         )
 
 
@@ -119,9 +137,17 @@ def get_batches(scenario_state, tokenizer, batch_size, pad_to_seq_len):
     input_ids = tokenizer(prompts, padding="max_length",
                           return_tensors="np",
                           max_length=pad_to_seq_len).input_ids
-    assert len(input_ids.shape) == 2, "Please use a longer pad_to_seq_len"
-    print(f"Max sequence length: {max(np.sum(input_ids != tokenizer.pad_token_id, axis=1))}, "
-          f"Pad to sequences length: {pad_to_seq_len}")
+    assert len(input_ids.shape) == 2, f"Please use a longer pad_to_seq_len. current = {pad_to_seq_len}"
+    max_seq_len = max(np.sum(input_ids != tokenizer.pad_token_id, axis=1))
+    if max_seq_len != pad_to_seq_len:
+        pad_to_seq_len = min(int(math.ceil(max_seq_len / 256) * 256), pad_to_seq_len)
+        input_ids = tokenizer(prompts, padding="max_length",
+                              return_tensors="np",
+                              max_length=pad_to_seq_len).input_ids
+        assert len(input_ids.shape) == 2, f"Auto-adjusting pad_to_seq_len failed. current = {pad_to_seq_len}"
+        max_seq_len = max(np.sum(input_ids != tokenizer.pad_token_id, axis=1))
+
+    print(f"Max sequence length: {max_seq_len}, Pad to sequences length: {pad_to_seq_len}")
 
     # Pad and divide into batches
     n_prompts = len(prompts)
@@ -272,6 +298,7 @@ def run_entry(description, pad_to_seq_len, args):
     run_specs = run_entries_to_run_specs(
         run_entries=run_entries,
         max_eval_instances=args.max_eval_instances,
+        num_train_trials=3,
     )
     run_spec = run_specs[0]
     run_path: str = os.path.join(args.run_path, run_spec.name)
@@ -286,7 +313,10 @@ def run_entry(description, pad_to_seq_len, args):
     adapter = AdapterFactory.get_adapter(run_spec.adapter_spec, tokenizer_service)
 
     ##### Scenario #####
+    print(run_spec)
     scenario = create_scenario(run_spec.scenario_spec)
+    scenario.output_path = f"data/{run_spec.name}"
+    os.makedirs(scenario.output_path, exist_ok=True)
     instances = scenario.get_instances()
 
     # Give each instance a unique ID
@@ -303,7 +333,7 @@ def run_entry(description, pad_to_seq_len, args):
 
     ##### Execute #####
     if pad_to_seq_len is None:
-        pad_to_seq_len = adapter.window_service.max_sequence_length - run_spec.adapter_spec.max_tokens
+        pad_to_seq_len = adapter.window_service.max_sequence_length - run_spec.adapter_spec.max_tokens + 1
     scenario_state = execute(scenario_state, tokenizer, effective_bs, pad_to_seq_len)
 
     ##### Metrics #####
