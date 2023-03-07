@@ -68,7 +68,7 @@ python3  ./data_wrangle_run.py\
     --do_test \
     --sample_method manual \
     --data_dir data/datasets/data_imputation/Restaurant \
-    --batch_run  --pad-to-seq-len 123 --model facebook/opt-30b --percent 10 90 0 100 0 100 --gpu-batch-size 8 --num-gpu-batches 1
+    --batch_run  --pad-to-seq-len 123 --model facebook/opt-30b --percent 20 80 0 100 0 100 --gpu-batch-size 40 --num-gpu-batches 2
 
 python3  ./data_wrangle_run.py\
     --num_run 65 \
@@ -77,7 +77,7 @@ python3  ./data_wrangle_run.py\
     --do_test \
     --sample_method manual \
     --data_dir data/datasets/data_imputation/Buy \
-    --batch_run  --pad-to-seq-len 488 --model facebook/opt-30b --percent 100 0 100 0 100 0 --gpu-batch-size 2 --num-gpu-batches 1
+    --batch_run  --pad-to-seq-len 488 --model facebook/opt-30b --percent 20 80 0 100 0 100 --gpu-batch-size 20 --num-gpu-batches 3
 
 python3  ./data_wrangle_run.py\
     --num_run 200  \
@@ -85,4 +85,4 @@ python3  ./data_wrangle_run.py\
     --do_test \
     --sample_method manual \
     --data_dir data/datasets/error_detection/Hospital \
-    --batch_run --pad-to-seq-len 200 --model facebook/opt-30b --percent 100 0 100 0 100 0 --gpu-batch-size 5 --num-gpu-batches 1
+    --batch_run --pad-to-seq-len 200 --model facebook/opt-30b --percent 20 80 0 100 0 100 --gpu-batch-size 50 --num-gpu-batches 2
