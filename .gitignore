@@ -19,6 +19,9 @@ dist
 flexgen/apps/data
 flexgen/apps/runs
 flexgen/apps/benchmark_output
+flexgen/apps/data_wrangle/data
+flexgen/apps/data_wrangle/outputs
+flexgen/apps/data_wrangle/core
 
 # pickle
 *.pkl
