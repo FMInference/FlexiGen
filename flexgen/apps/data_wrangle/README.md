@@ -15,4 +15,4 @@ Here we show how to use FlexGen for the data wrangling tasks. The implementation
 
 - To test FlexGen Throughput of a data imputation task (e.g., Restaurant), run:
 
-      bash test_batch_query.case.sh
+      bash test_batch_query_case.sh
