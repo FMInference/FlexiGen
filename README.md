@@ -22,7 +22,7 @@ The goal of FlexGen is to create a high-throughput system to enable new and exci
 foundation models to throughput-oriented tasks on low-cost hardware, such as a single commodity GPU
 instead of expensive systems.
 
-See [examples](examples) for we can run _on a single commodity GPU_ with FlexGen, such as benchmarking and data wrangling.
+See [examples](#examples) for we can run _on a single commodity GPU_ with FlexGen, such as benchmarking and data wrangling.
 
 ❌ **Limitation**. As an offloading-based system running on weak GPUs, FlexGen also has its limitations.
 FlexGen can be significantly slower than the case when you have enough powerful GPUs to hold the whole model, especially for small-batch cases.
