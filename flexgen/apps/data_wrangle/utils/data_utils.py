@@ -33,7 +33,7 @@ def serialize_row(
         if str(row[c_og]) == "nan":
             row[c_og] = nan_tok
         else:
-            row[c_og] = f"{row[c_og].strip()}"
+            row[c_og] = f"{str(row[c_og]).strip()}"
         res.append(f"{c_map}: {row[c_og]}".lstrip())
     if len(sep_tok) > 0 and sep_tok != ".":
         sep_tok = f" {sep_tok}"
