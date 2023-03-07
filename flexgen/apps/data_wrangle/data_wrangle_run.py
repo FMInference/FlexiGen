@@ -1,3 +1,7 @@
+# The source code in this file is partially adapted from
+# https://github.com/HazyResearch/fm_data_tasks/blob/main/fm_data_tasks/utils/prompt_utils.py
+# which is Apache License Version 2.0
+
 """Run inference."""
 import argparse
 from tqdm import tqdm
@@ -8,8 +12,6 @@ from pathlib import Path
 import time
 import numpy as np
 from transformers import AutoTokenizer, AutoConfig
-# from manifest import Manifest
-
 import flexgen.apps.data_wrangle.utils.data_utils as data_utils
 import flexgen.apps.data_wrangle.utils.prompt_utils as prompt_utils
 from flexgen.apps.data_wrangle.utils import constants
@@ -176,7 +178,10 @@ def parse_args() -> argparse.Namespace:
 
 
 def get_tokenizer(name):
-    tokenizer = AutoTokenizer.from_pretrained(name, padding_side="left")
+    if name == 'facebook/opt-175b':
+        tokenizer = AutoTokenizer.from_pretrained('facebook/opt-30b', padding_side="left")
+    else:
+        tokenizer = AutoTokenizer.from_pretrained(name, padding_side="left")
     tokenizer.add_bos_token = False
     if 'galactica' in name:
         config = AutoConfig.from_pretrained(name)
