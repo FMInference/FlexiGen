@@ -53,7 +53,6 @@ pip install -e .
 ```
 
 ## Examples 
-
 ### HELM Benchmark 
 FlexGen can be integrated into [HELM](https://crfm.stanford.edu/helm), a language model benchmark framework, as its execution backend.
 You can use the commands below to run a Massive Multitask Language Understanding (MMLU) [scenario](https://crfm.stanford.edu/helm/latest/?group=mmlu) with a single T4 (16GB) GPU and 200GB of DRAM.
@@ -63,8 +62,7 @@ python3 -m flexgen.apps.helm_run --description mmlu:model=text,subject=abstract_
 Note that only a subset of HELM scenarios is tested.
 
 ### Data Wrangling
-You can use run examples in this paper: [Can Foundation Models Wrangle Your Data?](https://arxiv.org/abs/2205.09911).
-See the instructions [here](flexgen/apps/data_wrangle).
+You can run the examples in this paper, ['Can Foundation Models Wrangle Your Data?'](https://arxiv.org/abs/2205.09911), by following the instructions [here](flexgen/apps/data_wrangle).
 
 ## Performance Benchmark
 ### Generation Throughput (token/s)
