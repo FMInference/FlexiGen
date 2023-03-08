@@ -50,7 +50,7 @@ python3  ./data_wrangle_run.py\
     --do_test \
     --sample_method manual \
     --data_dir data/datasets/entity_matching/structured/DBLP-ACM \
-    --batch_run --pad-to-seq-len 1274 --model facebook/opt-175b --pin-weight 0 --cpu --percent 0 50 0 0 0 100 --gpu-batch-size 10 --num-gpu-batches 10
+    --batch_run --pad-to-seq-len 1274 --model facebook/opt-175b --pin-weight 0 --cpu --percent 0 50 0 0 0 100 --gpu-batch-size 8 --num-gpu-batches 5
 
 python3  ./data_wrangle_run.py\
     --num_run 200 \
@@ -59,7 +59,7 @@ python3  ./data_wrangle_run.py\
     --do_test \
     --sample_method manual \
     --data_dir data/datasets/entity_matching/structured/DBLP-GoogleScholar \
-    --batch_run --pad-to-seq-len 1209 --model facebook/opt-175b --pin-weight 0 --cpu --percent 0 50 0 0 0 100 --gpu-batch-size 10 --num-gpu-batches 10
+    --batch_run --pad-to-seq-len 1209 --model facebook/opt-175b --pin-weight 0 --cpu --percent 0 50 0 0 0 100 --gpu-batch-size 8 --num-gpu-batches 5
 
 python3  ./data_wrangle_run.py\
     --num_run 86 \

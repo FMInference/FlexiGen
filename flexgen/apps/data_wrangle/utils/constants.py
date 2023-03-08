@@ -1,7 +1,7 @@
 
 # The source code in this file is mainly adapted from
 # https://github.com/HazyResearch/fm_data_tasks/blob/main/fm_data_tasks/utils/constants.py
-# which is Apache License Version 2.0
+# which is under Apache License Version 2.0.
 
 """Constants."""
 
