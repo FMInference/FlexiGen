@@ -79,7 +79,7 @@ Here we show how to use FlexGen for the data wrangling tasks including entity ma
 | EM: Walmart-Amazon     | 200            | 748           | 3             |4171.319  | 36.008               |
 | EM: Amazon-Google      | 200            | 876           | 3             |4893.572  | 35.925               |
 | EM: DBLP-ACM           | 200            | 1274          | 3             |7624.726  | 33.496               |
-| EM: DBLP-GoogleScholar | 200            | 1209          | 3             |          |                      |
+| EM: DBLP-GoogleScholar | 200            | 1209          | 3             |8275.828  | 29.290               |
 | DI: Restaurant         | 86             | 123           | 5             |648.762   | 16.968               |
 | DI: Buy                | 65             | 488           | 10            |2086.961  | 14.317               |
 | ED: Hospital           | 200            | 200           | 3             |1154.133  | 35.178               |
