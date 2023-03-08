@@ -1,3 +1,7 @@
+# The source code in this file is mainly adapted from
+# https://github.com/HazyResearch/fm_data_tasks/blob/main/fm_data_tasks/utils/utils.py
+# which is under Apache License Version 2.0.
+
 """Misc utils."""
 import logging
 from pathlib import Path
