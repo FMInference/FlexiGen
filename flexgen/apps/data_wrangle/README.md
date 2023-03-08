@@ -39,7 +39,7 @@ Here we show how to use FlexGen for the data wrangling tasks including entity ma
 
 ###  OPT6.7B 
 
-| Task                   | Tested Samples    |  Input Length | Output Length | Time (s) | Throughput (token/s) |
+| Task                   | Tested Samples    |  Input Length | Output Length | Time (s) |  Input + Output Throughput (token/s) |
 |------------------------|-------------------|---------------|---------------|----------|----------------------|
 | EM: Fodors-Zagats      | 189               | 744           | 3             | 109.556  | 1281.871             |
 | EM: Beer               | 91                | 592           | 3             | 42.087   | 1272.360             |
@@ -55,7 +55,7 @@ Here we show how to use FlexGen for the data wrangling tasks including entity ma
 
 ###  OPT30B 
 
-| Task                   | Tested Samples    |  Input Length | Output Length | Time (s) | Throughput (token/s) |
+| Task                   | Tested Samples    |  Input Length | Output Length | Time (s) |  Input + Output Throughput (token/s) |
 |------------------------|-------------------|---------------|---------------|----------|----------------------|
 | EM: Fodors-Zagats      | 189               | 744           | 3             | 541.550  | 248.287              |
 | EM: Beer               | 91                | 592           | 3             | 238.58   | 224.450              |
@@ -71,7 +71,7 @@ Here we show how to use FlexGen for the data wrangling tasks including entity ma
 
 ###  OPT175B 
 
-| Task                   | Tested Samples |  Input Length | Output Length | Time (s) | Throughput (token/s) |
+| Task                   | Tested Samples |  Input Length | Output Length | Time (s) |  Input + Output Throughput (token/s) |
 |------------------------|----------------|---------------|---------------|----------|----------------------|
 | EM: Fodors-Zagats      | 189            | 744           | 3             |3928.310  | 34.228               |
 | EM: Beer               | 91             | 592           | 3             |1356.786  | 35.083               |
