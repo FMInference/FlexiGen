@@ -5,14 +5,13 @@ For Apple Silicon Mac
 
 python3 apps/chatbot.py --model facebook/opt-1.3b --platform cpu
 python3 apps/chatbot.py --model facebook/opt-2.7b --platform mps:0
-python3 apps/chatbot.py --model facebook/opt-6.7b --platform mps:0
-python3 apps/chatbot.py --model facebook/opt-30b --compress-weight --platform mps:0
+python3 apps/chatbot.py --model facebook/opt-1.3b --platform mps:0 --dpl-apikey YOUR_API_KEY --dpl-lang [de|ja|...]
+python3 apps/chatbot.py --model facebook/opt-66b --percent 100 0 100 0 100 0 --compress-weight --platform mps:0
 
-python3 apps/chatbot.py --model facebook/opt-66b --compress-weight --platform mps:0
-
---compress-weight
---percent 100 0 100 0 100 0
 --gen-len 96
+
+Python library for DeepL API 
+https://pypi.org/project/deepl/
 
 """
 
@@ -27,6 +26,7 @@ from flexgen.opt_config import get_opt_config
 
 from transformers import AutoTokenizer
 import torch
+import deepl
 
 
 def run_chat(args):
@@ -57,6 +57,10 @@ def run_chat(args):
                                       group_dim=2, symmetric=False))
     assert not (args.compress_cache and args.attn_sparsity < 1.0), "Not implemented"
 
+    # DeepL setting
+    if not args.dpl_apikey == "None":
+        dpl_translator = deepl.Translator(args.dpl_apikey)
+
     # Model
     print("Initialize...")
     tokenizer = AutoTokenizer.from_pretrained(args.model, padding_side="left")
@@ -86,6 +90,11 @@ def run_chat(args):
 
         start_time = time.time()
 
+        # DeepL Translate
+        if not args.dpl_apikey == "None":
+            trns_inp = dpl_translator.translate_text(inp, target_lang="EN-US")
+            inp = trns_inp.text
+
         context += "Human: " + inp + "\n"
         inputs = tokenizer([context])
         output_ids = model_nm.generate(inputs.input_ids,
@@ -108,8 +117,18 @@ def run_chat(args):
         # context: Last text
         # index: len(context) + len(reply from model)
         
+        # DeepL Translate
         outputs = outputs[:index + 1]
-        print(outputs[len(context):].strip("\n"), end="")
+        if not (args.dpl_apikey == "None" and args.dpl_lang == "None"):
+            out = outputs[len(context):].strip("\n").replace("Assistant:", "")
+            trns_out = dpl_translator.translate_text(out, target_lang=args.dpl_lang)
+            output = trns_out.text
+            print("Assistant: ", end="")
+
+        else:
+            output = outputs[len(context):].strip("\n")
+
+        print(output, end="")
         print(f" [{time.time() - start_time:.2f}s]")
         context = outputs
 
@@ -129,7 +148,7 @@ def add_parser_arguments(parser):
     parser.add_argument("--offload-dir", type=str, default="~/flexgen_offload_dir",
         help="The directory to offload tensors. ")
     parser.add_argument("--prompt-len", type=int, default=512)
-    parser.add_argument("--gen-len", type=int, default=32)
+    parser.add_argument("--gen-len", type=int, default=64)
     parser.add_argument("--cut-gen-len", type=int,
         help="Cut generation length for fast debugging.")
     parser.add_argument("--num-gpu-batches", type=int, default=1)
@@ -166,6 +185,8 @@ def add_parser_arguments(parser):
 
     parser.add_argument("--platform", type=str, default="cuda:0", help="use the number to specify device, the platform can also be cpu or mps")
 
+    parser.add_argument("--dpl-apikey", type=str, default="None", help="DeepL AuthKey")
+    parser.add_argument("--dpl-lang", type=str, default="None", help="DeepL translates Assistant reply")
 
 
 if __name__ == "__main__":
@@ -195,6 +216,6 @@ if __name__ == "__main__":
         args.pin_weight = False
 
     if args.platform == "cpu":
-        args.percent = [0, 100, 0, 100, 0, 100]
+        args.percent = [0, 100, 0, 100, 0, 100]    
 
     run_chat(args)
