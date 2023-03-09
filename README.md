@@ -67,7 +67,7 @@ python3 -m flexgen.apps.helm_run --description mmlu:model=text,subject=abstract_
 Note that only a subset of HELM scenarios is tested. See more tested scenarios [here](flexgen/apps/helm_passed_30b.sh).
 
 ### Run FlexGen on any cloud with SkyPilot
-FlexGen benchmark can be launched with [SkyPilot](http://skypilot.co), a tool for launching ML jobs on any cloud.
+FlexGen benchmark can be launched with [SkyPilot](https://github.com/skypilot-org/skypilot), a tool for launching ML jobs on any cloud.
 You can use a single command below to automatically launch the benchmark on any cloud with SkyPilot, after you setup your cloud account locally (check how to setup SkyPilot [here](https://skypilot.readthedocs.io/en/latest/getting-started/installation.html)).
 ```
 sky launch -c flexgen --detach-setup flexgen/apps/task.yaml
