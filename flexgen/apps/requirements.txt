@@ -1,0 +1,4 @@
+numpy
+argparse
+transformers
+deepl

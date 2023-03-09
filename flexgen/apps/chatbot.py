@@ -1,17 +1,16 @@
 # Copyright (c) Meta Platforms, Inc. and affiliates.
 # This software may be used and distributed according to the terms of the GNU General Public License version 3.
 """
-For Apple Silicon Mac
 
 python3 apps/chatbot.py --model facebook/opt-1.3b --platform cpu
 python3 apps/chatbot.py --model facebook/opt-2.7b --platform mps:0
-python3 apps/chatbot.py --model facebook/opt-1.3b --platform mps:0 --dpl-apikey YOUR_API_KEY --dpl-lang [de|ja|...]
+python3 apps/chatbot.py --model facebook/opt-1.3b --platform mps:0 --dpl-apikey YOUR_API_KEY --dpl-lang de|ja|...
 python3 apps/chatbot.py --model facebook/opt-66b --percent 100 0 100 0 100 0 --compress-weight --platform mps:0
 
 --gen-len 96
 
-Python library for DeepL API 
-https://pypi.org/project/deepl/
+DeepL API Request Parameters
+https://www.deepl.com/ja/docs-api/translate-text/translate-text/
 
 """
 
@@ -58,7 +57,7 @@ def run_chat(args):
     assert not (args.compress_cache and args.attn_sparsity < 1.0), "Not implemented"
 
     # DeepL setting
-    if not args.dpl_apikey == "None":
+    if not args.dpl_apikey == "":
         dpl_translator = deepl.Translator(args.dpl_apikey)
 
     # Model
@@ -91,7 +90,7 @@ def run_chat(args):
         start_time = time.time()
 
         # DeepL Translate
-        if not args.dpl_apikey == "None":
+        if not args.dpl_apikey == "":
             trns_inp = dpl_translator.translate_text(inp, target_lang="EN-US")
             inp = trns_inp.text
 
@@ -119,7 +118,7 @@ def run_chat(args):
         
         # DeepL Translate
         outputs = outputs[:index + 1]
-        if not (args.dpl_apikey == "None" and args.dpl_lang == "None"):
+        if (not args.dpl_apikey == "") and (not args.dpl_lang == ""):
             out = outputs[len(context):].strip("\n").replace("Assistant:", "")
             trns_out = dpl_translator.translate_text(out, target_lang=args.dpl_lang)
             output = trns_out.text
@@ -185,8 +184,8 @@ def add_parser_arguments(parser):
 
     parser.add_argument("--platform", type=str, default="cuda:0", help="use the number to specify device, the platform can also be cpu or mps")
 
-    parser.add_argument("--dpl-apikey", type=str, default="None", help="DeepL AuthKey")
-    parser.add_argument("--dpl-lang", type=str, default="None", help="DeepL translates Assistant reply")
+    parser.add_argument("--dpl-apikey", type=str, default="", help="DeepL ApiKey")
+    parser.add_argument("--dpl-lang", type=str, default="", help="DeepL translates Assistant reply")
 
 
 if __name__ == "__main__":
