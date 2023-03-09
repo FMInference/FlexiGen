@@ -7,6 +7,19 @@ python completion.py --model facebook/opt-30b --percent 100 0 100 0 100 0 --comp
 python completion.py --model facebook/opt-66b --percent 50 10 100 0 100 0 --compress-weight
 ```
 
+### Data Wrangling
+
+Run the tests of data wrangling tasks in the [fm_data_tasks](https://github.com/HazyResearch/fm_data_tasks) repo from [HazyResearch](https://github.com/HazyResearch). 
+Check [more details](./data_wrangle/README.md).
+```
+cd data_wrangle
+bash install
+bash test_batch_query_all_opt6.7b.sh
+bash test_batch_query_all_opt30b.sh
+bash test_batch_query_all_opt175b.sh
+```
+
+
 ### HELM benchmark
 Run Massive Multitask Language Understanding (MMLU) scenario.
 ```

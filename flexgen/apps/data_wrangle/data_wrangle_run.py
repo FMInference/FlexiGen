@@ -1,13 +1,17 @@
+# The source code in this file is partially adapted from
+# https://github.com/HazyResearch/fm_data_tasks/blob/main/fm_data_tasks/utils/prompt_utils.py
+# which is under Apache License Version 2.0.
+
 """Run inference."""
 import argparse
+from tqdm import tqdm
 import json
+import math
 import logging
 from pathlib import Path
 import time
 import numpy as np
 from transformers import AutoTokenizer, AutoConfig
-# from manifest import Manifest
-
 import flexgen.apps.data_wrangle.utils.data_utils as data_utils
 import flexgen.apps.data_wrangle.utils.prompt_utils as prompt_utils
 from flexgen.apps.data_wrangle.utils import constants
@@ -174,7 +178,10 @@ def parse_args() -> argparse.Namespace:
 
 
 def get_tokenizer(name):
-    tokenizer = AutoTokenizer.from_pretrained(name, padding_side="left")
+    if name == 'facebook/opt-175b':
+        tokenizer = AutoTokenizer.from_pretrained('facebook/opt-30b', padding_side="left")
+    else:
+        tokenizer = AutoTokenizer.from_pretrained(name, padding_side="left")
     tokenizer.add_bos_token = False
     if 'galactica' in name:
         config = AutoConfig.from_pretrained(name)
@@ -204,12 +211,11 @@ def single_query_test(args, task_instruction, test_data, task, pd_data_files, te
                         num_bits=4, group_size=64,
                         group_dim=2, symmetric=False))
 
-    print(f"Init weights begin.")
+    logger.info(f"Init weights begin.")
     tic = time.time()
     model = OptLM(args.model, env, args.path, policy)
-    print(f"Init weights end. Elapsed: {time.time() - tic:.2f} s", flush=True)
+    logger.info(f"Init weights end. Elapsed: {time.time() - tic:.2f} s")
 
-    
     if args.add_task_instruction:
         prompt = lambda x: f"{task_instruction} {x}"
     else:
@@ -246,14 +252,13 @@ def single_query_test(args, task_instruction, test_data, task, pd_data_files, te
         gt = test_data["label_str"]
         preds = []
         idx = 0
-        # Run a few for printing -- they are cached
         for _ in range(args.num_print):
             logger.info(prompt(queries[idx]))
             tic = time.time()
             input_ids_tmp = tokenizer(prompt(queries[idx]), padding="max_length",
                                         return_tensors="np",
                                         max_length=args.pad_to_seq_len).input_ids
-            print(input_ids_tmp.shape)
+            logger.info(input_ids_tmp.shape)
             output_ids_tmp = model.generate(input_ids_tmp,
                                             do_sample=True,
                                             temperature=args.temperature,
@@ -292,6 +297,7 @@ def single_query_test(args, task_instruction, test_data, task, pd_data_files, te
             f"_{int(args.add_task_instruction)}inst"
             f"_{int(args.class_balanced)}cb"
             f"_{args.sample_method}"
+            f"_{args.model}"
             f"_{args.num_print}run"
             f"_{int(args.dry_run)}dry" / f"trial_{trial_num}.feather"
         )
@@ -336,16 +342,17 @@ def batch_query_test(args, task_instruction, test_data, task, pd_data_files, tes
                         num_bits=4, group_size=64,
                         group_dim=2, symmetric=False))
 
-    print(f"Init weights begin.")
+    logger.info(f"Init weights begin.")
     tic = time.time()
     model = OptLM(args.model, env, args.path, policy)
-    print(f"Init weights end. Elapsed: {time.time() - tic:.2f} s", flush=True)
+    logger.info(f"Init weights end. Elapsed: {time.time() - tic:.2f} s.")
 
     if args.add_task_instruction:
         prompt = lambda x: f"{task_instruction} {x}"
     else:
         prompt = lambda x: f"{x}"
-    trial_metrics = {"prec": [], "rec": [], "f1": [], "acc": [], "throughput": []}
+    trial_metrics = {"prec": [], "rec": [], "f1": [], "acc": [], "total_time": [],
+                     "output_throughput": [], "total_throughput": []}
 
     saved_prefix = None
     
@@ -377,31 +384,54 @@ def batch_query_test(args, task_instruction, test_data, task, pd_data_files, tes
         preds = []
         idx = 0
         
-        # Run a few for printing -- they are cached
+        max_prompt_seq_length = 0
         prompt_strs = []
         for _ in range(args.num_run):
-            if idx == 0:
-                logger.info(f"This is a sample prompt: {prompt(queries[idx])}")
+            # if idx == 0:
+            #    logger.info(f"This is a sample prompt: {prompt(queries[idx])}")
             prompt_strs.append(prompt(queries[idx]))
-            idx += 1
             
+            current_prompt_tmp = tokenizer(prompt(queries[idx]), padding="max_length",
+                                      return_tensors="np", max_length=args.pad_to_seq_len).input_ids
+            # logger.info(f"Current prompt <{idx}> length: {current_prompt_tmp.shape[1]}")
+            max_prompt_seq_length = max(max_prompt_seq_length, current_prompt_tmp.shape[1])
+            idx += 1
+        
+        logger.info(f"max_prompt_seq_length: {max_prompt_seq_length}")
         tic = time.time()
         
-        input_ids_tmp = tokenizer(prompt_strs, padding="max_length",
+        input_ids = tokenizer(prompt_strs, padding="max_length",
                                   return_tensors="np",
-                                  max_length=args.pad_to_seq_len).input_ids
-        output_ids_tmp = model.generate(input_ids_tmp,
-                                        do_sample=True,
-                                        temperature=args.temperature,
-                                        max_new_tokens=args.max_tokens,
-                                        stop=args.stop_token)
-        toc = time.time()
-        input_strs = tokenizer.batch_decode(input_ids_tmp, skip_special_tokens=True)
-        output_strs = tokenizer.batch_decode(output_ids_tmp, skip_special_tokens=True)
-        preds = [ output_strs[i][len(input_strs[i]):] for i in range(len(input_strs))]
+                                  max_length=max_prompt_seq_length).input_ids
+        output_ids = []
         
-        throughput = args.num_run * args.max_tokens/(time.time() - tic)
-        print(f"Batch inference run end. Elapsed: { toc - tic:.2f} s, Throughput: {throughput:.2f} token/s")
+        flexgen_batch_size = args.gpu_batch_size*args.num_gpu_batches
+        num_batched_run = math.floor(args.num_run/flexgen_batch_size)
+        args.num_run = num_batched_run * flexgen_batch_size
+        input_ids = input_ids[0:args.num_run]
+        
+        for i in tqdm(range(num_batched_run)):
+            input_ids_tmp = input_ids[i*flexgen_batch_size: (i+1)*flexgen_batch_size]
+            output_ids_tmp = model.generate(input_ids_tmp,
+                                            do_sample=True,
+                                            temperature=args.temperature,
+                                            max_new_tokens=args.max_tokens,
+                                            stop=args.stop_token)
+            output_ids.extend(output_ids_tmp)
+        
+        toc = time.time()
+        input_strs = tokenizer.batch_decode(input_ids, skip_special_tokens=True)
+        output_strs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)
+        preds = [output_strs[i][len(input_strs[i]):] for i in range(len(input_strs))]
+        
+        total_time = time.time() - tic
+        total_prompt_tokens = args.num_run * max_prompt_seq_length
+        total_generate_tokens = args.num_run * args.max_tokens
+        output_throughput = total_generate_tokens/total_time
+        total_throughput = (total_prompt_tokens+total_generate_tokens)/total_time
+        logger.info(f"Batch inference run end. Elapsed: {total_time:.2f} s;")
+        logger.info(f"Output throughput: {output_throughput:.2f} token/s;")
+        logger.info(f"Total throughput: {total_throughput:.2f} token/s;")
         # Save trial predictions
         save_data = test_data.iloc[:args.num_run].copy(deep=True).reset_index()
         gt = gt[:args.num_run]
@@ -412,13 +442,18 @@ def batch_query_test(args, task_instruction, test_data, task, pd_data_files, tes
 
         logger.info(
             f"Metrics Trial {trial_num}\n"
-            f"Prec: {prec:.3f} Recall: {rec:.3f} Acc: {acc:.3f} F1: {f1:.3f} FlexGen Throughput: {throughput:.3f}"
+            f"Prec: {prec:.3f} Recall: {rec:.3f} Acc: {acc:.3f} F1: {f1:.3f} \n"
+            f"<FlexGen> time: {total_time:.3f} \n" 
+            f"<FlexGen> output throughput: {output_throughput:.3f} \n"
+            f"<FlexGen> total throughput: {total_throughput:.3f}"
         )
         trial_metrics["rec"].append(rec)
         trial_metrics["prec"].append(prec)
         trial_metrics["acc"].append(acc)
         trial_metrics["f1"].append(f1)
-        trial_metrics["throughput"].append(throughput)
+        trial_metrics["total_time"].append(total_time)
+        trial_metrics["output_throughput"].append(output_throughput)
+        trial_metrics["total_throughput"].append(total_throughput)
 
         output_file = (
             Path(args.output_dir)
@@ -429,6 +464,7 @@ def batch_query_test(args, task_instruction, test_data, task, pd_data_files, tes
             f"_{int(args.add_task_instruction)}inst"
             f"_{int(args.class_balanced)}cb"
             f"_{args.sample_method}"
+            f"_{args.model}"
             f"_{args.num_run}run"
             f"_{int(args.dry_run)}dry" / f"trial_{trial_num}.feather"
         )
