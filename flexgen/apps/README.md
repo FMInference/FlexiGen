@@ -25,3 +25,18 @@ Run Massive Multitask Language Understanding (MMLU) scenario.
 ```
 python3 helm_run.py --description mmlu:model=text,subject=abstract_algebra,data_augmentation=canonical --pad-to-seq-len 512 --model facebook/opt-30b --percent 20 80 0 100 0 100 --gpu-batch-size 48 --num-gpu-batches 3 --max-eval-instance 100
 ```
+
+### Run on any cloud with SkyPilot
+FlexGen benchmark can be launched with [SkyPilot](https://github.com/skypilot-org/skypilot), a tool for launching ML jobs on any cloud.
+First, install SkyPilot and check you have some cloud credentials ([docs](https://skypilot.readthedocs.io/en/latest/getting-started/installation.html)):
+```bash
+pip install "skypilot[aws,gcp,azure,lambda]"  # pick your clouds
+sky check
+```
+You can now use a single command to launch the benchmark on any cloud, which automatically finds a region (in the cheapest-price order) with availability for the requested GPUs:
+```bash
+sky launch -c flexgen --detach-setup skypilot.yaml
+```
+You can then log into the cluster running the job with `ssh flexgen` for monitoring. Once the job has finished, you can terminate the cluster with `sky down flexgen` or pass in `--down` flag to the command above to have the cluster terminate itself automatically.
+
+To run any other FlexGen command, you can edit [`skypilot.yaml`](skypilot.yaml) and replace the `run` section.

@@ -66,8 +66,25 @@ python3 -m flexgen.apps.helm_run --description mmlu:model=text,subject=abstract_
 ```
 Note that only a subset of HELM scenarios is tested. See more tested scenarios [here](flexgen/apps/helm_passed_30b.sh).
 
+### Run FlexGen on Any Cloud with SkyPilot
+FlexGen benchmark can be launched with [SkyPilot](https://github.com/skypilot-org/skypilot), a tool for launching ML jobs on any cloud.
+First, install SkyPilot and check you have some cloud credentials ([docs](https://skypilot.readthedocs.io/en/latest/getting-started/installation.html)):
+```bash
+pip install "skypilot[aws,gcp,azure,lambda]"  # pick your clouds
+sky check
+```
+You can now use a single command to launch the benchmark on any cloud, which automatically finds a region (in the cheapest-price order) with availability for the requested GPUs:
+```bash
+sky launch -c flexgen --detach-setup flexgen/apps/skypilot.yaml
+```
+You can then log into the cluster running the job with `ssh flexgen` for monitoring. Once the job has finished, you can terminate the cluster with `sky down flexgen` or pass in `--down` flag to the command above to have the cluster terminate itself automatically.
+
+To run any other FlexGen command, you can edit [`flexgen/apps/skypilot.yaml`](./flexgen/apps/skypilot.yaml) and replace the `run` section.
+
 ### Data Wrangling
 You can run the examples in this paper, ['Can Foundation Models Wrangle Your Data?'](https://arxiv.org/abs/2205.09911), by following the instructions [here](flexgen/apps/data_wrangle).
+
+
 
 ## Performance Benchmark
 ### Generation Throughput (token/s)
@@ -85,6 +102,7 @@ The corresponding effective batch sizes are in parentheses. Please see [here](be
 - Metric: generation throughput (token/s) = number of the generated tokens / (time for processing prompts + time for generation).  
 
 How to [reproduce](benchmark/flexgen).
+
 
 ## Roadmap
 We plan to work on the following features.
