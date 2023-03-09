@@ -1,9 +1,11 @@
-# benchmark.yaml
 # A SkyPilot job definition for benchmarking FlexGen.
+# References:
+#   https://skypilot.readthedocs.io/en/latest/getting-started/quickstart.html
+#   https://skypilot.readthedocs.io/en/latest/reference/yaml-spec.html
 
 # Specify the resources required for this job.
 resources:
-  accelerators: T4:1
+  accelerators: T4:1  # Can replace with other GPU type and count, see `sky show-gpus`.
   instance_type: n1-highmem-32 # On GCP with 1 T4 GPU and more than 200GB of RAM.
   # instance_type: g4dn.16xlarge # On AWS with 1 T4 GPU and more than 200GB of RAM.
   # Azure does not support T4 GPUs with more than 200GB of RAM.
