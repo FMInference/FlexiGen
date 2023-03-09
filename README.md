@@ -73,7 +73,7 @@ First, install SkyPilot and check you have some cloud credentials ([docs](https:
 pip install "skypilot[aws,gcp,azure,lambda]"  # pick your clouds
 sky check
 ```
-You can now use a single command to automatically launch the benchmark on any cloud:
+You can now use a single command to launch the benchmark on any cloud, which automatically finds a region (in the cheapest-price order) with availability for the requested GPUs:
 ```bash
 sky launch -c flexgen --detach-setup flexgen/apps/skypilot.yaml
 ```
