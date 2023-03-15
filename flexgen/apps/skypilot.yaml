@@ -6,9 +6,7 @@
 # Specify the resources required for this job.
 resources:
   accelerators: T4:1  # Can replace with other GPU type and count, see `sky show-gpus`.
-  instance_type: n1-highmem-32 # On GCP with 1 T4 GPU and more than 200GB of RAM.
-  # instance_type: g4dn.16xlarge # On AWS with 1 T4 GPU and more than 200GB of RAM.
-  # Azure does not support T4 GPUs with more than 200GB of RAM.
+  memory: 200+ # requires more than 200GB of memory
 
 setup: |
   # Install Latest CUDA
