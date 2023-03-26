@@ -71,7 +71,7 @@ You can run the examples in this paper, ['Can Foundation Models Wrangle Your Dat
 
 ## Performance Benchmark
 ### Generation Throughput (token/s)
-The corresponding effective batch sizes are in parentheses. Please see [here](benchmark/batch_size_table.md) for more details.
+The corresponding effective batch sizes and lowest offloading devices are in parentheses. Please see [here](benchmark/batch_size_table.md) for more details.
 | System | OPT-6.7B | OPT-30B | OPT-175B |
 | ------ | -------- | ------- | -------- |
 | Hugging Face Accelerate  | 25.12 (2 on GPU)  | 0.62 (8 on CPU) | 0.01 (2 on disk) |
