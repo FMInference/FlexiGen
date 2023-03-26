@@ -1,0 +1,35 @@
+# A SkyPilot job definition for benchmarking FlexGen.
+# References:
+#   https://skypilot.readthedocs.io/en/latest/getting-started/quickstart.html
+#   https://skypilot.readthedocs.io/en/latest/reference/yaml-spec.html
+
+# Specify the resources required for this job.
+resources:
+  accelerators: T4:1  # Can replace with other GPU type and count, see `sky show-gpus`.
+  memory: 200+ # requires more than 200GB of memory
+
+setup: |
+  # Install Latest CUDA
+  wget -q https://developer.download.nvidia.com/compute/cuda/11.6.0/local_installers/cuda_11.6.0_510.39.01_linux.run
+  echo Installing CUDA 11.6.0
+  sudo sh cuda_11.6.0_510.39.01_linux.run --silent --toolkit
+  
+  # Create conda environment
+  conda create -y -n flexgen python=3.9
+  conda activate flexgen
+  pip install torch==1.12.1+cu116 torchvision==0.13.1+cu116 torchaudio==0.12.1 --extra-index-url https://download.pytorch.org/whl/cu116
+  pip install crfm-helm==0.2.1
+
+  # Install flexgen
+  git clone https://github.com/FMInference/FlexGen.git || true
+  cd FlexGen
+  pip install -e .
+
+run: |
+  # Run any FlexGen command
+  conda activate flexgen
+  # python3 -m flexgen.flex_opt --model facebook/opt-1.3b
+  python3 -m flexgen.apps.helm_run \
+          --description mmlu:model=text,subject=abstract_algebra,data_augmentation=canonical \
+          --pad-to-seq-len 512 --model facebook/opt-30b --percent 20 80 0 100 0 100 \
+          --gpu-batch-size 48 --num-gpu-batches 3 --max-eval-instance 100
