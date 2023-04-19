@@ -202,6 +202,8 @@ FlexGen utilizes a block schedule to reuse weight and overlap I/O with computati
 
 <img src="https://github.com/FMInference/FlexGen/raw/main/docs/block_schedule.jpg" alt="image" width="500"></img>
 
+More technical details see our paper [paper](https://arxiv.org/abs/2303.06865).
+
 ## Roadmap
 We plan to work on the following features.
 
