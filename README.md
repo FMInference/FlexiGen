@@ -1,7 +1,5 @@
 # FlexGen: High-throughput Generative Inference of Large Language Models with a Single GPU [[paper](https://arxiv.org/abs/2303.06865)]
 
-<img src="https://github.com/FMInference/FlexGen/blob/main/docs/throughput_vs_latency.jpg" alt="image" width="500"></img>
-
 FlexGen is a high-throughput generation engine for running large language models with limited GPU memory. FlexGen allows **high-throughput** generation by IO-efficient offloading, compression, and **large effective batch sizes**.
 
 ----------
