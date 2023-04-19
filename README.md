@@ -1,8 +1,23 @@
-# FlexGen
+# FlexGen: High-throughput Generative Inference of Large Language Models with a Single GPU [[paper](https://arxiv.org/abs/2303.06865)]
+
+<img src="https://github.com/FMInference/FlexGen/blob/main/docs/throughput_vs_latency.jpg" alt="image" width="500"></img>
 
 FlexGen is a high-throughput generation engine for running large language models with limited GPU memory. FlexGen allows **high-throughput** generation by IO-efficient offloading, compression, and **large effective batch sizes**.
 
-## Throughput-Oriented Inference for Large Language Models
+----------
+
+This project was made possible thanks to a collaboration with
+
+<a href="https://cs.stanford.edu/"><img src="https://identity.stanford.edu/wp-content/uploads/sites/3/2020/06/wordmark-nospace-red.png" height="20"></a> &nbsp;&nbsp;&nbsp;
+<a href="https://sky.cs.berkeley.edu/"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/University_of_California%2C_Berkeley_logo.svg/1280px-University_of_California%2C_Berkeley_logo.svg.png" height="22"></a> &nbsp;&nbsp;&nbsp;
+<a href="https://www.andrew.cmu.edu/user/beidic/"><img src="https://upload.wikimedia.org/wikipedia/commons/9/9b/Carnegie_Mellon_wordmark.svg" height="20"></a> &nbsp;&nbsp;&nbsp;
+<a href="https://www.together.xyz/"><img src="https://images.squarespace-cdn.com/content/v1/6358bea282189a0adf57fe16/eef09191-631f-40d9-9bfd-f875b25bcf0b/together-logo-black-transparent2.png" height="20"></a> &nbsp;&nbsp;&nbsp;
+<a href="https://research.yandex.com/"><img src="https://storage.yandexcloud.net/yandex-research/assets/yandex_research.png" height="20"></a> &nbsp;&nbsp;&nbsp;
+<a href="https://ds3lab.inf.ethz.ch/"><img src="https://user-images.githubusercontent.com/1608867/220273382-c09669b3-42fd-47c2-b88c-7ed55cb43820.png" height="20"></a>
+
+----------
+
+## Motivation
 
 In recent years, large language models (LLMs) have shown great performance across a 
 wide range of tasks. Increasingly, LLMs have been applied not only to interactive 
@@ -28,20 +43,14 @@ Check out the [examples](#examples) of what you can run on a single commodity GP
 FlexGen can be significantly slower than the case when you have enough powerful GPUs to hold the whole model, especially for small-batch cases.
 FlexGen is mostly optimized for throughput-oriented batch processing settings (e.g., classifying or extracting information from many documents in batches), on single GPUs.
 
-----------
+## Content
+- [Installation](#installation)
+- [Usage and Examples](#usage-and-examples)
+  - [Get Started with a Single GPU](#get-started-with-a-single-gpu)
+  - [Scaling to Distributed GPUs](#scaling-to-distributed-gpus)
+  - [API Example](#api-example)
 
-This project was made possible thanks to a collaboration with
-
-<a href="https://cs.stanford.edu/"><img src="https://identity.stanford.edu/wp-content/uploads/sites/3/2020/06/wordmark-nospace-red.png" height="20"></a> &nbsp;&nbsp;&nbsp;
-<a href="https://sky.cs.berkeley.edu/"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/University_of_California%2C_Berkeley_logo.svg/1280px-University_of_California%2C_Berkeley_logo.svg.png" height="22"></a> &nbsp;&nbsp;&nbsp;
-<a href="https://www.andrew.cmu.edu/user/beidic/"><img src="https://upload.wikimedia.org/wikipedia/commons/9/9b/Carnegie_Mellon_wordmark.svg" height="20"></a> &nbsp;&nbsp;&nbsp;
-<a href="https://www.together.xyz/"><img src="https://images.squarespace-cdn.com/content/v1/6358bea282189a0adf57fe16/eef09191-631f-40d9-9bfd-f875b25bcf0b/together-logo-black-transparent2.png" height="20"></a> &nbsp;&nbsp;&nbsp;
-<a href="https://research.yandex.com/"><img src="https://storage.yandexcloud.net/yandex-research/assets/yandex_research.png" height="20"></a> &nbsp;&nbsp;&nbsp;
-<a href="https://ds3lab.inf.ethz.ch/"><img src="https://user-images.githubusercontent.com/1608867/220273382-c09669b3-42fd-47c2-b88c-7ed55cb43820.png" height="20"></a>
-
-----------
-
-## Install
+## Installation
 Requirements:  
  - PyTorch >= 1.12 [(Help)](https://pytorch.org/get-started/locally/)
 
@@ -57,8 +66,9 @@ cd FlexGen
 pip install -e .
 ```
 
-## Examples 
-### HELM Benchmark 
+## Usage and Examples
+
+### Run HELM Benchmark with FlexGen
 FlexGen can be integrated into [HELM](https://crfm.stanford.edu/helm), a language model benchmark framework, as its execution backend.
 You can use the commands below to run a Massive Multitask Language Understanding (MMLU) [scenario](https://crfm.stanford.edu/helm/latest/?group=mmlu) with a single T4 (16GB) GPU and 200GB of DRAM.
 ```
@@ -66,10 +76,90 @@ python3 -m flexgen.apps.helm_run --description mmlu:model=text,subject=abstract_
 ```
 Note that only a subset of HELM scenarios is tested. See more tested scenarios [here](flexgen/apps/helm_passed_30b.sh).
 
-### Data Wrangling
+### Run Data Wrangling Tasks with FlexGen
 You can run the examples in this paper, ['Can Foundation Models Wrangle Your Data?'](https://arxiv.org/abs/2205.09911), by following the instructions [here](flexgen/apps/data_wrangle).
 
-## Performance Benchmark
+### Get Started with a Single GPU
+
+#### OPT-1.3B
+To get started, you can try a small model like OPT-1.3B first. It fits into a single GPU so no offloading is required.
+FlexGen will automatically download weights from Hugging Face.
+```
+python3 -m flexgen.flex_opt --model facebook/opt-1.3b
+```
+
+You should see some text generated by OPT-1.3B and the benchmark results.
+
+#### OPT-30B
+To run large models like OPT-30B, you will need to use CPU offloading. You can try commands below.
+The `--percent` argument specifies the offloading strategy for parameters, attention cache and hidden states separately.
+The exact meaning of this argument can be found [here](https://github.com/FMInference/FlexGen/blob/9d092d848f106cd9eaf305c12ef3590f7bcb0277/flexgen/flex_opt.py#L1271-L1279).
+```
+python3 -m flexgen.flex_opt --model facebook/opt-30b --percent 0 100 100 0 100 0
+```
+
+#### OPT-175B
+To run OPT-175B, you need to download the weights from [metaseq](https://github.com/facebookresearch/metaseq/tree/main/projects/OPT) and convert the weights into Alpa [format](https://alpa.ai/tutorials/opt_serving.html#convert-opt-175b-weights-into-alpa-formats).
+You can then try to offloading all weights to disk by
+```
+python3 -m flexgen.flex_opt --model facebook/opt-175b --percent 0 0 100 0 100 0 --offload-dir YOUR_SSD_FOLDER
+```
+
+### How to set the offloading strategy and `--percent`?
+We will release an automatic policy optimizer later, but now you have to manually try a few strategies.
+The idea of high-throughput generation is to offload parameters and attention cache as much as possible to the CPU and disk if necessary.
+You can see the reference strategies in our benchmark [here](https://github.com/FMInference/FlexGen/blob/9d092d848f106cd9eaf305c12ef3590f7bcb0277/benchmark/flexgen/bench_suite.py#L39-L79).
+To avoid out-of-memory, you can tune the `--percent` to offload more tensors to the CPU and disk.
+
+### Scaling to Distributed GPUs
+If you have more GPUs, FlexGen can combine offloading with pipeline parallelism to allow scaling.
+For example, if you have 2 GPUs but the aggregated GPU memory is less than the model size, you still need offloading. FlexGen allow you to do pipeline parallelism with these 2 GPUs to accelerate the generation.
+See examples [here](https://github.com/FMInference/FlexGen/tree/main/benchmark/flexgen#distributed-gpus).
+
+### API Example
+We demonstrate the usage of FlexGen API in [completion.py](flexgen/apps/completion.py).
+This example shows how to run generation for two sentences.
+To get the best throughput out of FlexGen, you typically need to batch more sentences.
+
+#### Generation API
+FlexGen has a generation API following the style of Hugging Face's transformers.
+```python
+output_ids = model.generate(
+	input_ids,
+	do_sample=True,
+	temperature=0.7,
+	max_new_tokens=32,
+	stop=stop)
+```
+
+#### Example Commands
+You can use the example commands below.
+If you do not have enough GPU/CPU memory, see the [Handle Out-Of-Memory](#handle-out-of-memory) section.
+
+```
+# Complete with OPT-6.7B. You need at least 15GB of GPU memory.
+python3 -m flexgen.apps.completion --model facebook/opt-6.7b
+```
+
+```
+# Complete with OPT-30B. You need about 90GB of CPU memory.
+python3 -m flexgen.apps.completion --model facebook/opt-30b --percent 0 100 100 0 100 0
+```
+
+```
+# Complete with instruction-tuned OPT-IML-MAX-30B. You need about 90GB of CPU memory.
+python3 -m flexgen.apps.completion --model facebook/opt-iml-max-30b --percent 0 100 100 0 100 0
+```
+
+### Handle Out-Of-Memory
+If you do not have enough GPU/CPU memory, here are a few things you can try.
+They save more memory but run slower.
+
+- Do not pin weights by adding `--pin-weight 0`. This can reduce the weight memory usage on CPU by around 20% or more.
+- Enable weight compression by adding `--compress-weight`. This can reduce the weight memory usage by around 70%.
+- Offload all weights to disk by using `--percent 0 0 100 0 100 0`. This requires very little CPU and GPU memory.
+
+## Performance Results
 ### Generation Throughput (token/s)
 The corresponding effective batch sizes and lowest offloading devices are in parentheses. Please see [here](benchmark/batch_size_table.md) for more details.
 | System | OPT-6.7B | OPT-30B | OPT-175B |
@@ -85,6 +175,23 @@ The corresponding effective batch sizes and lowest offloading devices are in par
 - Metric: generation throughput (token/s) = number of the generated tokens / (time for processing prompts + time for generation).  
 
 How to [reproduce](benchmark/flexgen).
+
+### Latency-Throughput Trade-Off
+The figure below shows the latency and throughput trade-off of three offloading-based systems on OPT-175B (left) and OPT-30B (right).
+FlexGen achieves a new Pareto-optimal frontier with significatnly higher maximum throughput for both models.
+Other systems cannot further increase throughput due to out-of-memory.
+"FlexGen(c)" is FlexGen with compression.
+
+<img src="https://github.com/FMInference/FlexGen/blob/main/docs/throughput_vs_latency.jpg" alt="image" width="500"></img>
+
+## How It Works
+FlexGen can be flexibly configured under various hardware resource constraints by aggregating memory and computation from the GPU, CPU, and disk. Through a linear programming optimizer, it searches for the best pattern to store and access the tensors, including weights, activations, and attention key/value (KV) cache. FlexGen further compresses both weights and KV cache to 4 bits with negligible accuracy loss.
+
+One key idea of FlexGen is to play the latency-throughput trade-off. Achieving low latency is inherently challenging for offloading methods,
+but the I/O efficiency of offloading can be greatly boosted for throughput-oriented scenarios (see the figure above).
+FlexGen utilizes a block schedule to reuse weight and overlap I/O with computation, as shown in figure (b) below, while other baseline systems use an inefficient row-by-row schedule, as shown in figure (a) below.
+
+<img src="https://github.com/FMInference/FlexGen/raw/main/docs/block_schedule.jpg" alt="image" width="500"></img>
 
 ## Roadmap
 We plan to work on the following features.
