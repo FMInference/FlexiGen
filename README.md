@@ -113,8 +113,9 @@ python3 -m flexgen.flex_opt --model facebook/opt-175b --percent 0 0 100 0 100 0 
 ```
 
 ### Scaling to Distributed GPUs
-If you have more GPUs, FlexGen can combine offloading with pipeline parallelism to allow scaling.
+If you have multiple machines with GPUs, FlexGen can combine offloading with pipeline parallelism to allow scaling.
 For example, if you have 2 GPUs but the aggregated GPU memory is less than the model size, you still need offloading. FlexGen allow you to do pipeline parallelism with these 2 GPUs to accelerate the generation.
+But to have scaled performance, you should have GPUs on distributed machines.
 See examples [here](https://github.com/FMInference/FlexGen/tree/main/benchmark/flexgen#distributed-gpus).
 
 ### API Example
