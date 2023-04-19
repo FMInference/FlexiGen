@@ -46,9 +46,15 @@ FlexGen is mostly optimized for throughput-oriented batch processing settings (e
 ## Content
 - [Installation](#installation)
 - [Usage and Examples](#usage-and-examples)
+  - [Run HELM Benchmark with FlexGen](#run-helm-benchmark-with-flexgen)
+  - [Run Data Wrangling Tasks with FlexGen](#run-data-wrangling-tasks-with-flexgen)
   - [Get Started with a Single GPU](#get-started-with-a-single-gpu)
   - [Scaling to Distributed GPUs](#scaling-to-distributed-gpus)
   - [API Example](#api-example)
+  - [Frequently Asked Questions](#frequently-asked-questions)
+- [Performance Results](#performance-results)
+- [How It Works](#how-it-works)
+- [Roadmap](#roadmap)
 
 ## Installation
 Requirements:  
@@ -105,12 +111,6 @@ You can then try to offloading all weights to disk by
 python3 -m flexgen.flex_opt --model facebook/opt-175b --percent 0 0 100 0 100 0 --offload-dir YOUR_SSD_FOLDER
 ```
 
-### How to set the offloading strategy and `--percent`?
-We will release an automatic policy optimizer later, but now you have to manually try a few strategies.
-The idea of high-throughput generation is to offload parameters and attention cache as much as possible to the CPU and disk if necessary.
-You can see the reference strategies in our benchmark [here](https://github.com/FMInference/FlexGen/blob/9d092d848f106cd9eaf305c12ef3590f7bcb0277/benchmark/flexgen/bench_suite.py#L39-L79).
-To avoid out-of-memory, you can tune the `--percent` to offload more tensors to the CPU and disk.
-
 ### Scaling to Distributed GPUs
 If you have more GPUs, FlexGen can combine offloading with pipeline parallelism to allow scaling.
 For example, if you have 2 GPUs but the aggregated GPU memory is less than the model size, you still need offloading. FlexGen allow you to do pipeline parallelism with these 2 GPUs to accelerate the generation.
@@ -151,7 +151,16 @@ python3 -m flexgen.apps.completion --model facebook/opt-30b --percent 0 100 100 
 python3 -m flexgen.apps.completion --model facebook/opt-iml-max-30b --percent 0 100 100 0 100 0
 ```
 
-### Handle Out-Of-Memory
+### Frequently Asked Questions
+
+#### How to set the offloading strategy and `--percent`?
+We will release an automatic policy optimizer later, but now you have to manually try a few strategies.
+The idea of high-throughput generation is to offload parameters and attention cache as much as possible to the CPU and disk if necessary.
+You can see the reference strategies in our benchmark [here](https://github.com/FMInference/FlexGen/blob/9d092d848f106cd9eaf305c12ef3590f7bcb0277/benchmark/flexgen/bench_suite.py#L39-L79).
+To avoid out-of-memory, you can tune the `--percent` to offload more tensors to the CPU and disk.
+
+
+#### How to handle out-of-memory?
 If you do not have enough GPU/CPU memory, here are a few things you can try.
 They save more memory but run slower.
 
