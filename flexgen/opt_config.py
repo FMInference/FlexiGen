@@ -51,7 +51,7 @@ class OptConfig:
 
 def get_opt_config(name, **kwargs):
     if "/" in name:
-        name = name.split("/")[1]
+        name = name.split("/")[-1]
     name = name.lower()
 
     # Handle opt-iml-30b and opt-iml-max-30b
