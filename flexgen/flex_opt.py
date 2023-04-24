@@ -584,7 +584,9 @@ class OptLM:
                  config: Union[str, OptConfig],
                  env: ExecutionEnv,
                  path: str,
-                 policy: Policy):
+                 policy: Policy,
+                 local: bool = False,
+                 local_path: str = None):
         if isinstance(config, str):
             config = get_opt_config(config)
         self.config = config
@@ -592,6 +594,8 @@ class OptLM:
         self.path = path
         self.policy = policy
         self.num_gpu_batches = policy.num_gpu_batches
+        self.local = local
+        self.local_path = local_path
 
         layers = []
         layers.append(InputEmbed(self.config, self.env, self.policy))
@@ -646,7 +650,7 @@ class OptLM:
             os.path.join(self.path, f"{self.config.name}-np")))
         check_path = os.path.join(expanded_path, "decoder.embed_positions.weight")
         if not os.path.exists(check_path) and DUMMY_WEIGHT not in check_path:
-            download_opt_weights(self.config.name, self.path)
+            download_opt_weights(self.config.name, self.path, self.local, self.local_path)
 
         self.layers[j].init_weight(self.weight_home[j], expanded_path)
 
@@ -1216,7 +1220,7 @@ def run_flexgen(args):
           f"hidden size (prefill): {hidden_size/GB:.3f} GB")
 
     print("init weight...")
-    model = OptLM(opt_config, env, args.path, policy)
+    model = OptLM(opt_config, env, args.path, policy, args.local, args.model)
 
     try:
         print("warmup - generate")
@@ -1315,6 +1319,9 @@ def add_parser_arguments(parser):
 
     parser.add_argument("--overlap", type=str2bool, nargs='?',
         const=True, default=True)
+
+    parser.add_argument("--local", action="store_true",
+        help="Whether to use local copy of the model weights. ")
 
 
 if __name__ == "__main__":
