@@ -16,11 +16,17 @@ python cost_model.py --model facebook/opt-30b --prompt-len 512 --gen-len 32 \
                      --alpha-g 1.2 --alpha-c 1.2 --alpha-n 1.2
 
 Note:
-1. You need to fit the hardware constants for your device, see class CostModelConfig.
-   (We fit them using gradient descent by collecting real run data points. Profiling for primitive modules or take numbers from the internet will not be accurate.)
-2. Adjust relaxation ratio alpha_g, alpha_c, and alpha_n carefully, a smaller ratio cause a conservative policy, and a larger ratio cause an aggresive policy.
-3. The cost model does not consider CPU compute delegation, and the support for quantization is incomplete.
-4. In the second use case of estimating throughput for a fixed policy, relax the constraints alpha_g, alpha_c, and alpha_n to allow imprecise peak memory estimation.
+1. You need to fit the hardware constants for your device,
+   see class CostModelConfig.
+   (We fit them using gradient descent by collecting real run data points.
+    Profiling for primitive modules or take numbers from the internet will not be accurate.)
+2. Adjust relaxation ratio alpha_g, alpha_c, and alpha_n carefully,
+   a smaller ratio cause a conservative policy,
+   and a larger ratio cause an aggresive policy.
+3. The cost model does not consider CPU compute delegation,
+   and the support for quantization is incomplete.
+4. In the second use case of estimating throughput for a fixed policy,
+   relax the constraints alpha_g, alpha_c, and alpha_n to allow imprecise peak memory estimation.
 """
 
 import argparse
