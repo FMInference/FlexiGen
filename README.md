@@ -209,6 +209,6 @@ We plan to work on the following features.
 
 - [ ] Optimize the performance for multiple GPUs on the same machine
 - [ ] Support more models (BLOOM, CodeGen, GLM)
-- [ ] Release the cost model and policy optimizer
+- [X] Release the cost model and policy optimizer
 - [ ] Macbook Support (M1 and M2)
 - [ ] AMD Support
