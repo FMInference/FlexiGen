@@ -112,22 +112,18 @@ class TorchCompressedDevice:
         # Quantize
         if symmetric:
             B = 2 ** (num_bits - 1) - 1
-            mn_shape = (shape[:group_dim] + (num_groups, 1) +
-                        shape[group_dim+1:])
-            mn = torch.zeros(mn_shape).to(data.device)
+            mn = None
             mx = torch.max(data.abs(), dim=group_dim + 1, keepdim=True)[0]
+            scale = B / mx
+            data = data * scale
+            data = data.clamp_(-(B + 1), B).round_().to(torch.int8)
         else:
             B = 2 ** num_bits - 1
             mn = torch.min(data, dim=group_dim + 1, keepdim=True)[0]
             mx = torch.max(data, dim=group_dim + 1, keepdim=True)[0]
-
-        scale = B / (mx - mn)
-        data = data - mn
-        data.mul_(scale)
-
-        if symmetric:
-            data = data.clamp_(-(B + 1), B).round_().to(torch.int8)
-        else:
+            scale = B / (mx - mn)
+            data = data - mn
+            data.mul_(scale)
             data = data.clamp_(0, B).round_().to(torch.uint8)
 
         # Pack
