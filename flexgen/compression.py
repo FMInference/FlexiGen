@@ -33,16 +33,16 @@ class TorchCompressedDevice:
         """Allocate a compressed TorchTensor. Round up the shape to group boundary."""
         assert comp_config.num_bits == 4 and dtype == np.float16
 
-        group_size, group_dim = comp_config.group_size, comp_config.group_dim
+        group_size, group_dim, symmetric = comp_config.group_size, comp_config.group_dim, comp_config.symmetric
 
         # Round up
         num_groups = (shape[group_dim] + group_size - 1) // group_size
         data_shape = (
             shape[:group_dim] + (num_groups * (group_size // 2),) + shape[group_dim+1:])
         scale_shape = (
-            shape[:group_dim] + (num_groups, 2) + shape[group_dim+1:])
+            shape[:group_dim] + (num_groups, 1 if symmetric else 2) + shape[group_dim+1:])
 
-        data = self.base_device.allocate(data_shape, np.uint8, pin_memory=pin_memory)
+        data = self.base_device.allocate(data_shape, np.int8 if symmetric else np.uint8, pin_memory=pin_memory)
         scale = self.base_device.allocate(scale_shape, np.float16, pin_memory=pin_memory)
 
         return TorchTensor(shape, np_dtype_to_torch_dtype[dtype],
@@ -89,7 +89,7 @@ class TorchCompressedDevice:
         group_size, num_bits, group_dim, symmetric = (
             comp_config.group_size, comp_config.num_bits,
             comp_config.group_dim, comp_config.symmetric)
-        assert num_bits == 4 and group_size % 2 == 0 and not symmetric
+        assert num_bits == 4 and group_size % 2 == 0
 
         if tensor.device.type == "cpu" and tensor.dtype == torch.float16:
             tensor = tensor.float()
@@ -110,14 +110,25 @@ class TorchCompressedDevice:
         data = tensor.view(new_shape)
 
         # Quantize
-        B = 2 ** num_bits - 1
-        mn = torch.min(data, dim=group_dim + 1, keepdim=True)[0]
-        mx = torch.max(data, dim=group_dim + 1, keepdim=True)[0]
+        if symmetric:
+            B = 2 ** (num_bits - 1) - 1
+            mn_shape = (shape[:group_dim] + (num_groups, 1) +
+                        shape[group_dim+1:])
+            mn = torch.zeros(mn_shape).to(data.device)
+            mx = torch.max(data.abs(), dim=group_dim + 1, keepdim=True)[0]
+        else:
+            B = 2 ** num_bits - 1
+            mn = torch.min(data, dim=group_dim + 1, keepdim=True)[0]
+            mx = torch.max(data, dim=group_dim + 1, keepdim=True)[0]
 
         scale = B / (mx - mn)
         data = data - mn
         data.mul_(scale)
-        data = data.clamp_(0, B).round_().to(torch.uint8)
+
+        if symmetric:
+            data = data.clamp_(-(B + 1), B).round_().to(torch.int8)
+        else:
+            data = data.clamp_(0, B).round_().to(torch.uint8)
 
         # Pack
         left_indices = (
@@ -127,15 +138,19 @@ class TorchCompressedDevice:
             tuple(slice(0, x) for x in data.shape[:group_dim+1]) +
             (slice(1, data.shape[group_dim+1], 2),))
         data = torch.bitwise_or(
-            data[left_indices].bitwise_left_shift(4), data[right_indices])
+            data[left_indices].bitwise_left_shift(4),
+            data[right_indices].bitwise_and(0xF))
 
         # Reshape
         data_shape = (
             shape[:group_dim] + (num_groups * (group_size // 2),) + shape[group_dim+1:])
-        scale_shape = (
-            shape[:group_dim] + (num_groups, 2) + shape[group_dim+1:])
         data = data.view(data_shape)
-        scale = torch.cat([scale, mn], dim=group_dim+1).view(scale_shape)
+        scale_shape = (
+            shape[:group_dim] + (num_groups, 1 if symmetric else 2) + shape[group_dim+1:])
+        if symmetric:
+            scale = scale.view(scale_shape)
+        else:
+            scale = torch.cat([scale, mn], dim=group_dim+1).view(scale_shape)
 
         data = TorchTensor.create_from_torch(data, self.base_device)
         scale = TorchTensor.create_from_torch(scale, self.base_device)
@@ -182,12 +197,16 @@ class TorchCompressedDevice:
             tuple(slice(0, x) for x in data.shape[:group_dim+1]) +
             (slice(1, data.shape[group_dim+1], 2),))
         data[left_indices] = packed.bitwise_right_shift(4)
-        data[right_indices] = packed.bitwise_and(0xF)
+        data[right_indices] = packed.bitwise_and(0xF).bitwise_left_shift(4).bitwise_right_shift(4)
 
         # Dequantize
-        scale, mn = scale.data.split(1, dim=group_dim + 1)
-        data.div_(scale)
-        data.add_(mn)
+        if symmetric:
+            scale = scale.data
+            data = data / scale
+        else:
+            scale, mn = scale.data.split(1, dim=group_dim + 1)
+            data.div_(scale)
+            data.add_(mn)
 
         # Reshape
         unpad_len = (group_size - tensor.shape[group_dim] % group_size) % group_size
@@ -281,7 +300,7 @@ def compress(tensor, config):
         B = 2 ** (num_bits - 1) - 1
         scale = B / torch.max(data.abs(), dim=group_dim + 1, keepdim=True)[0]
         data = data * scale
-        data = data.clamp_(-B, B).round_().to(torch.int8)
+        data = data.clamp_(-(B + 1), B).round_().to(torch.int8)
         return data, scale, original_shape
     else:
         B = 2 ** num_bits - 1
