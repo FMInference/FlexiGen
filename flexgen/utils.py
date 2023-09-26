@@ -47,9 +47,10 @@ class ExecutionEnv:
         from flexgen.pytorch_backend import TorchDevice, TorchDisk, TorchMixedDevice
         gpu = TorchDevice("cuda:0")
         cpu = TorchDevice("cpu")
-        xpu = TorchDevice("xpu:0")
+        if is_xpu_available():
+            xpu = TorchDevice("xpu:0")
         disk = TorchDisk(offload_dir)
-        return cls(gpu=gpu, xpu=xpu, cpu=cpu, disk=disk, mixed=TorchMixedDevice([gpu, cpu, xpu, disk]))
+        return cls(gpu=gpu, xpu=xpu, cpu=cpu, disk=disk, mixed=TorchMixedDevice([gpu, xpu, cpu, disk]))
 
     def close_copy_threads(self):
         self.disk.close_copy_threads()
