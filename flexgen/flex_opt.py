@@ -1413,6 +1413,6 @@ if __name__ == "__main__":
     add_parser_arguments(parser)
     args = parser.parse_args()
 
-    assert len(args.percent) == 6
+    assert len(args.percent) == 9
 
     run_flexgen(args)

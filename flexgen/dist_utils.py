@@ -1,5 +1,6 @@
 import torch
 import torch.distributed as dist
+from flexgen.xpu_utils import is_xpu_available, is_ccl_available
 
 _COMM_DEVICE = None
 _PIPELINE_PARALLEL_PRED_GROUP = None
@@ -11,7 +12,10 @@ def initialize_distributed(head_ip, port, world_size, rank, local_rank,
           f'world_size={world_size}, rank={rank}, local_rank={local_rank}.')
 
     # Initialize distributed environment
-    torch.cuda.set_device(local_rank)
+    if is_xpu_available() and is_ccl_available():
+        torch.xpu.set_device(local_rank)
+    else:
+        torch.cuda.set_device(local_rank)
     distributed_init_method = f'tcp://{head_ip}:{port}'
     global _COMM_DEVICE
     _COMM_DEVICE = comm_device
@@ -19,6 +23,8 @@ def initialize_distributed(head_ip, port, world_size, rank, local_rank,
         backend = 'gloo'
     elif comm_device == 'gpu':
         backend = 'nccl'
+    elif comm_device == 'xpu' and is_ccl_available() and is_xpu_available():
+        backend = 'ccl'
     else:
         raise ValueError(f'Unknown comm_device: {comm_device}')
     dist.init_process_group(backend=backend,
