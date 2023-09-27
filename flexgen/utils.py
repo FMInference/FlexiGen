@@ -150,7 +150,7 @@ def cpu_mem_stats():
 def torch_mem_stats():
     objects = gc.get_objects()
     if is_xpu_available():
-        tensors = [obj for obj in objects if torch.is_tensor(obj) and obj.is_xpu()]x
+        tensors = [obj for obj in objects if torch.is_tensor(obj) and obj.is_xpu()]
     else:
         tensors = [obj for obj in objects if torch.is_tensor(obj) and obj.is_cuda]
 
