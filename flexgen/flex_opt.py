@@ -1205,7 +1205,7 @@ def run_flexgen(args):
                                       group_dim=0, symmetric=False),
                     args.compress_cache,
                     CompressionConfig(num_bits=4, group_size=64,
-                                      group_dim=2, symmetric=False))
+                                      group_dim=2, symmetric=True))
     assert not (args.compress_cache and args.attn_sparsity < 1.0), "Not implemented"
 
     opt_config = get_opt_config(args.model)
