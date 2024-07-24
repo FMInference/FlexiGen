@@ -187,7 +187,7 @@ How to [reproduce](benchmark/flexgen).
 
 ### Latency-Throughput Trade-Off
 The figure below shows the latency and throughput trade-off of three offloading-based systems on OPT-175B (left) and OPT-30B (right).
-FlexGen achieves a new Pareto-optimal frontier with significatnly higher maximum throughput for both models.
+FlexGen achieves a new Pareto-optimal frontier with significantly higher maximum throughput for both models.
 Other systems cannot further increase throughput due to out-of-memory.
 "FlexGen(c)" is FlexGen with compression.
 
