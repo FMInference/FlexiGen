@@ -16,7 +16,7 @@ def benchmark_func(func, number, repeat, warmup=3):
     for i in range(warmup):
         func()
 
-    costs = [0]
+    costs = []
 
     for i in range(repeat):
         torch.cuda.synchronize()
