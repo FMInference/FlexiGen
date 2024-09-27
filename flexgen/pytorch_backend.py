@@ -12,6 +12,7 @@ from typing import Optional, Union, Tuple
 import torch
 import torch.nn.functional as F
 import numpy as np
+from flexgen.xpu_utils import is_xpu_available
 
 from flexgen.utils import (GB, T, cpu_mem_stats, vector_gather,
     np_dtype_to_torch_dtype, torch_dtype_to_np_dtype,
@@ -32,6 +33,7 @@ def fix_recursive_import():
 class DeviceType(Enum):
     CPU = auto()
     CUDA = auto()
+    XPU = auto()
     DISK = auto()
     MIXED = auto()
     COMPRESSED = auto()
@@ -48,6 +50,8 @@ class DeviceType(Enum):
             return DeviceType.MIXED
         elif name == "compressed":
             return DeviceType.COMPRESSED
+        elif name == "xpu" and is_xpu_available():
+            return DeviceType.XPU
         else:
             raise ValueError(f"Invalid name: {name}")
 
@@ -419,11 +423,17 @@ class TorchDevice:
                 if k.is_cuda:
                     value = self._attention_value(q, k, v, attention_mask.data,
                         b, src_s, tgt_s, n_head, head_dim)
+                elif k.is_xpu():
+                    value = self._attention_value(q, k, v, attention_mask.data,
+                        b, src_s, tgt_s, n_head, head_dim)
                 else:
                     q = q.float().cpu()
                     k, v = k.float(), v.float()
-                    value = self._attention_value(q, k, v, attention_mask.data,
-                        b, src_s, tgt_s, n_head, head_dim).cuda().half()
+                    if is_xpu_available():
+                        value = self._attention_value(q, k, v, attention_mask.data, b, src_s, tgt_s, n_head, head_dim).xpu().half()
+                    else:
+                        value = self._attention_value(q, k, v, attention_mask.data,
+                            b, src_s, tgt_s, n_head, head_dim).cuda().half()
             else:  # Sparse attention
                 # shape: (s, b * n_head, head_dim)
                 k = k_cache.data[:src_s]
@@ -435,11 +445,20 @@ class TorchDevice:
                     value = self._sparse_attention_value(q, k, v_new, v_cache,
                         attention_mask.data, b, src_s, tgt_s, n_head, head_dim,
                         attn_sparsity)
-                else:
-                    q = q.float().cpu()
+                elif k.is_xpu():
                     value = self._sparse_attention_value(q, k, v_new, v_cache,
                         attention_mask.data, b, src_s, tgt_s, n_head, head_dim,
-                        attn_sparsity).cuda().half()
+                        attn_sparsity)
+                else:
+                    q = q.float().cpu()
+                    if is_xpu_available():
+                        value = self._sparse_attention_value(q, k, v_new, v_cache,
+                            attention_mask.data, b, src_s, tgt_s, n_head, head_dim,
+                            attn_sparsity).xpu().half()
+                    else:
+                        value = self._sparse_attention_value(q, k, v_new, v_cache,
+                            attention_mask.data, b, src_s, tgt_s, n_head, head_dim,
+                            attn_sparsity).cuda().half()
         else:  # Mixed device attention
             assert attn_sparsity >= 1.0
             value = self._mixed_device_attention(q, k_cache, v_cache,
@@ -541,8 +560,11 @@ class TorchDevice:
         k_gpu = k_gpu.permute(1, 2, 0)
         # shape: (b * n_head, s, head_dim)
         v_gpu = v_gpu.permute(1, 0, 2)
-
-        mask_gpu = mask[:b_gpu].cuda()
+        
+        if is_xpu_available():
+            mask_gpu = mask[:b_gpu].xpu()
+        else:
+            mask_gpu = mask[:b_gpu].cuda()
         value_gpu = self._attention_value(q_gpu, k_gpu, v_gpu, mask_gpu,
             b_gpu, src_s, tgt_s, n_head, head_dim)
 
@@ -562,8 +584,11 @@ class TorchDevice:
         mask_cpu = mask[b_gpu:]
         value_cpu = self._attention_value(q_cpu, k_cpu, v_cpu, mask_cpu,
             b_cpu, src_s, tgt_s, n_head, head_dim)
-
-        value = torch.cat([value_gpu, value_cpu.cuda().half()], dim=0)
+        
+        if is_xpu_available():
+            value = torch.cat([value_gpu, value_cpu.xpu().half()], dim=0)
+        else:
+            value = torch.cat([value_gpu, value_cpu.cuda().half()], dim=0)
         return value
 
     def mlp(self, inputs, wi, bi, wo, bo, w_ln, b_ln, donate):
@@ -584,22 +609,28 @@ class TorchDevice:
         return TorchTensor.create_from_torch(out, self)
 
     def synchronize(self):
-        torch.cuda.synchronize()
+        if is_xpu_available():
+            torch.xpu.synchronize()
+        else:
+            torch.cuda.synchronize()
 
     def mem_stats(self):
         if self.device_type == DeviceType.CUDA:
             cur_mem = torch.cuda.memory_allocated(self.dev)
             peak_mem = torch.cuda.max_memory_allocated(self.dev)
+        elif self.device_type == DeviceType.XPU:
+            cur_mem = torch.xpu.memory_allocated(self.dev)
+            peak_mem = torch.xpu.max_memory_allocated(self.dev)
         elif self.device_type == DeviceType.CPU:
             cur_mem = cpu_mem_stats()
-            peak_mem = 0
+            peak_mem = 0 
         else:
             raise NotImplementedError()
 
         return cur_mem, peak_mem
 
     def print_stats(self, output_file=None):
-        torch.cuda.synchronize()
+        self.synchronize()
         cur_mem, peak_mem = self.mem_stats()
 
         if output_file is not None:
@@ -621,7 +652,7 @@ class TorchDevice:
 class TorchDisk:
     """Manage tensors stored on a disk."""
 
-    def __init__(self, path, mem_capacity=None, cuda_id=0, num_copy_threads=4):
+    def __init__(self, path, mem_capacity=None, cuda_id=0, xpu_id =0, num_copy_threads=4):
         self.name = path
         self.path = os.path.abspath(os.path.expanduser(path))
         self.mem_capacity = mem_capacity
@@ -640,7 +671,7 @@ class TorchDisk:
         self.copy_queue = queue.Queue()
         self.copy_threads = [
             threading.Thread(
-                target=copy_worker_func, args=(self.copy_queue, cuda_id)
+                target=copy_worker_func, args=(self.copy_queue, cuda_id, xpu_id)
             ) for _ in range(num_copy_threads)
         ]
         for t in self.copy_threads:
@@ -665,9 +696,14 @@ class TorchDisk:
             os.remove(tensor.data)
 
     def init_cache_one_gpu_batch(self, config, task, policy):
-        num_head, hidden_size, prompt_len, gen_len, gpu_batch_size = (
-            config.n_head, config.input_dim, task.prompt_len, task.gen_len,
-            policy.gpu_batch_size)
+        if is_xpu_available():
+            num_head, hidden_size, prompt_len, gen_len, gpu_batch_size = (
+                config.n_head, config.input_dim, task.prompt_len, task.gen_len,
+                policy.xpu_batch_size)
+        else:
+            num_head, hidden_size, prompt_len, gen_len, gpu_batch_size = (
+                config.n_head, config.input_dim, task.prompt_len, task.gen_len,
+                policy.gpu_batch_size)
         shape = (prompt_len + gen_len - 1, gpu_batch_size * num_head, hidden_size // num_head)
         k_cache = self.allocate(shape, np.float16)
         v_cache = self.allocate(shape, np.float16)
@@ -736,18 +772,29 @@ class TorchMixedDevice:
                 x.delete()
 
     def init_cache_one_gpu_batch(self, config, task, policy):
-        num_head, hidden_size, prompt_len, gen_len, gpu_batch_size = (
-            config.n_head, config.input_dim, task.prompt_len, task.gen_len,
-            policy.gpu_batch_size)
+        if is_xpu_available():
+            num_head, hidden_size, prompt_len, gen_len, gpu_batch_size = (
+                config.n_head, config.input_dim, task.prompt_len, task.gen_len,
+                policy.xpu_batch_size)
+        else:
+            num_head, hidden_size, prompt_len, gen_len, gpu_batch_size = (
+                config.n_head, config.input_dim, task.prompt_len, task.gen_len,
+                policy.gpu_batch_size)
         shape = (prompt_len + gen_len - 1, gpu_batch_size * num_head, hidden_size // num_head)
 
         # We have to round to a multiple of `num_head`
         if policy.cache_disk_percent == 0:
-            len_gpu = int(shape[SEG_DIM] * policy.cache_gpu_percent / 100) // num_head * num_head
+            if is_xpu_available():
+                len_gpu = int(shape[SEG_DIM] * policy.cache_xpu_percent / 100) // num_head * num_head
+            else:
+                len_gpu = int(shape[SEG_DIM] * policy.cache_gpu_percent / 100) // num_head * num_head
             len_cpu = shape[SEG_DIM]  - len_gpu
             len_disk = 0
         else:
-            len_gpu = int(shape[SEG_DIM] * policy.cache_gpu_percent / 100) // num_head * num_head
+            if is_xpu_available():
+                len_gpu = int(shape[SEG_DIM] * policy.cache_xpu_percent / 100) // num_head * num_head
+            else:
+                len_gpu = int(shape[SEG_DIM] * policy.cache_gpu_percent / 100) // num_head * num_head        
             len_cpu = int(shape[SEG_DIM] * policy.cache_cpu_percent / 100) // num_head * num_head
             len_disk = shape[SEG_DIM] - len_gpu - len_cpu
         lens = [len_gpu, len_cpu, len_disk]
@@ -834,14 +881,15 @@ def general_copy(dst: TorchTensor, dst_indices: Tuple[slice],
     elif dst.device.device_type == DeviceType.DISK:
         # The tensor is on the disk, dispatch to copy threads for asynchronous copy
         dst.device.submit_copy(dst, dst_indices, src, src_indices)
-    elif (src.device.device_type == DeviceType.CUDA and
-          dst.device.device_type == DeviceType.CPU and
+    elif ((src.device.device_type == DeviceType.CUDA or src.device.device_type == DeviceType.XPU)
+          and dst.device.device_type == DeviceType.CPU and
           not dst.data.is_pinned() and src.shape[0] > 1):
         # The cpu tensor is not pinned, dispatch to copy threads and use pin_memory
         # as a relay
         global_disk_device.submit_copy(dst, dst_indices, src, src_indices)
     elif (src.device.device_type == DeviceType.CPU and
-          dst.device.device_type == DeviceType.CUDA and
+          (dst.device.device_type == DeviceType.CUDA or
+          dst.device.device_type == DeviceType.XPU) and 
           not src.data.is_pinned()):
         # The cpu tensor is not pinned, use pin_memory as a relay
         src = src.data[src_indices] if src_indices else src.data
@@ -875,32 +923,63 @@ def map_to_torch_tensor(tensor, indices):
     return data[indices] if indices else data
 
 
-def copy_worker_func(queue, cuda_id):
+def copy_worker_func(queue, cuda_id, xpu_id):
     """The copy worker thread."""
-    torch.cuda.set_device(cuda_id)
+    if is_xpu_available():
+        torch.xpu.set_device(xpu_id)
+    else:
+        torch.cuda.set_device(cuda_id)
 
     cpu_buf = torch.empty((1 * GB,), dtype=torch.float16, pin_memory=True)
-    copy_stream = torch.cuda.Stream()
-
-    with torch.cuda.stream(copy_stream):
-        while True:
-            item = queue.get()
-            if item is None:
+    if is_xpu_available():
+        copy_stream = torch.xpu.Stream()
+        
+        with torch.xpu.stream(copy_stream):
+            while True:
+                item = queue.get()
+                if item is None:
+                    queue.task_done()
+                    return
+    
+                dst, dst_indices, src, src_indices = item
+                src_data = map_to_torch_tensor(src, src_indices)
+                dst_data = map_to_torch_tensor(dst, dst_indices)
+    
+                if (src.device.device_type == DeviceType.XPU or
+                    dst.device.device_type == DeviceType.XPU):
+                    # Use a pinned cpu buffer as a relay
+                    size = np.prod(src_data.shape)
+                    tmp_cpu_buf = cpu_buf[:size].view(src_data.shape)
+                    tmp_cpu_buf.copy_(src_data)
+                    dst_data.copy_(tmp_cpu_buf)
+                else:
+                    dst_data.copy_(src_data)
+    
                 queue.task_done()
-                return
 
-            dst, dst_indices, src, src_indices = item
-            src_data = map_to_torch_tensor(src, src_indices)
-            dst_data = map_to_torch_tensor(dst, dst_indices)
+        
+    else:
+        copy_stream = torch.cuda.Stream()
 
-            if (src.device.device_type == DeviceType.CUDA or
-                dst.device.device_type == DeviceType.CUDA):
-                # Use a pinned cpu buffer as a relay
-                size = np.prod(src_data.shape)
-                tmp_cpu_buf = cpu_buf[:size].view(src_data.shape)
-                tmp_cpu_buf.copy_(src_data)
-                dst_data.copy_(tmp_cpu_buf)
-            else:
-                dst_data.copy_(src_data)
-
-            queue.task_done()
+        with torch.cuda.stream(copy_stream):
+            while True:
+                item = queue.get()
+                if item is None:
+                    queue.task_done()
+                    return
+    
+                dst, dst_indices, src, src_indices = item
+                src_data = map_to_torch_tensor(src, src_indices)
+                dst_data = map_to_torch_tensor(dst, dst_indices)
+    
+                if (src.device.device_type == DeviceType.CUDA or
+                    dst.device.device_type == DeviceType.CUDA):
+                    # Use a pinned cpu buffer as a relay
+                    size = np.prod(src_data.shape)
+                    tmp_cpu_buf = cpu_buf[:size].view(src_data.shape)
+                    tmp_cpu_buf.copy_(src_data)
+                    dst_data.copy_(tmp_cpu_buf)
+                else:
+                    dst_data.copy_(src_data)
+    
+                queue.task_done()

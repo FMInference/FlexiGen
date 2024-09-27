@@ -6,7 +6,7 @@ import numpy as np
 from flexgen.pytorch_backend import (TorchTensor, TorchDevice,
     DeviceType, general_copy, fix_recursive_import)
 from flexgen.utils import np_dtype_to_torch_dtype
-
+from flexgen.xpu_utils import is_xpu_available
 
 @dataclasses.dataclass
 class CompressionConfig:
@@ -49,9 +49,14 @@ class TorchCompressedDevice:
                            (data, scale, comp_config), self, name=name)
 
     def init_cache_one_gpu_batch(self, config, task, policy):
-        num_head, hidden_size, prompt_len, gen_len, gpu_batch_size = (
-            config.n_head, config.input_dim, task.prompt_len, task.gen_len,
-            policy.gpu_batch_size)
+        if is_xpu_available():
+            num_head, hidden_size, prompt_len, gen_len, gpu_batch_size = (
+                config.n_head, config.input_dim, task.prompt_len, task.gen_len,
+                policy.xpu_batch_size)
+        else:
+            num_head, hidden_size, prompt_len, gen_len, gpu_batch_size = (
+                config.n_head, config.input_dim, task.prompt_len, task.gen_len,
+                policy.gpu_batch_size)
         shape = (prompt_len + gen_len - 1, gpu_batch_size * num_head, hidden_size // num_head)
         # NOTE: disable pin_memory due to high memory overhead
         pin_memory = False
@@ -65,7 +70,10 @@ class TorchCompressedDevice:
         if self.base_device.device_type != DeviceType.CPU:
             return  # Only CPU requires this fp32 workspace
 
-        b = policy.gpu_batch_size
+        if is_xpu_available():
+            b = policy.xpu_batch_size
+        else:
+            b = policy.gpu_batch_size
         n_head = config.n_head
         head_dim = config.input_dim // n_head
         max_seq_len = task.prompt_len + task.gen_len - 1
@@ -334,7 +342,10 @@ def compress_and_decompress(tensor, config):
 
 def test_simulated_compression():
     torch.manual_seed(0)
-    a = torch.normal(0, 1, (64, 64, 64), dtype=torch.float16).cuda()
+    if is_xpu_available():
+        a = torch.normal(0, 1, (64, 64, 64), dtype=torch.float16).xpu()
+    else:
+        a = torch.normal(0, 1, (64, 64, 64), dtype=torch.float16).cuda()
 
     config = CompressionConfig(
         num_bits=4, group_size=32, group_dim=0, symmetric=False)
@@ -346,11 +357,17 @@ def test_simulated_compression():
 
 def test_real_compression():
     torch.manual_seed(0)
-    a = torch.normal(0, 1, (32, 1, 1), dtype=torch.float16).cuda()
+    if is_xpu_available():
+        a = torch.normal(0, 1, (32, 1, 1), dtype=torch.float16).xpu()
+    else:
+        a = torch.normal(0, 1, (32, 1, 1), dtype=torch.float16).cuda()
 
     config = CompressionConfig(
         num_bits=4, group_size=32, group_dim=0, symmetric=False)
-    dev = TorchDevice("cuda:0", 0, 0).compressed_device
+    if is_xpu_available():
+        dev =TorchDevice("xpu:0", 0, 0).compressed_device
+    else:
+        dev = TorchDevice("cuda:0", 0, 0).compressed_device
     packed = dev.compress(a, config)
     b = dev.decompress(packed)
 

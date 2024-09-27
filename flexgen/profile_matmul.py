@@ -7,13 +7,16 @@ import numpy as np
 import torch
 
 from flexgen.profile_bandwidth import benchmark_func
+from flexgen.xpu_utils import is_xpu_available
 
 
 def bench_matmul():
-    for device in ["cuda", "cpu"]:
+    for device in ["cuda", "cpu", "xpu"]:
         for n in [1024, 2048]:
             if device == "cuda":
                 dtype = torch.float16
+            elif device == "xpu" and is_xpu_available():
+                dtype = torch.bfloat16
             else:
                 dtype = torch.float32
 

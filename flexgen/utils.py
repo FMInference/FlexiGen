@@ -10,6 +10,7 @@ from typing import Tuple, Union, Optional, Any, Sequence, List
 
 import numpy as np
 import torch
+from flexgen.xpu_utils import is_xpu_available
 
 
 KB = 1 << 10
@@ -35,6 +36,7 @@ class Task:
 class ExecutionEnv:
     """Hardware environment."""
     gpu: Any = None
+    xpu: Any = None
     cpu: Any = None
     disk: Any = None
     mixed: Any = None
@@ -45,8 +47,10 @@ class ExecutionEnv:
         from flexgen.pytorch_backend import TorchDevice, TorchDisk, TorchMixedDevice
         gpu = TorchDevice("cuda:0")
         cpu = TorchDevice("cpu")
+        if is_xpu_available():
+            xpu = TorchDevice("xpu:0")
         disk = TorchDisk(offload_dir)
-        return cls(gpu=gpu, cpu=cpu, disk=disk, mixed=TorchMixedDevice([gpu, cpu, disk]))
+        return cls(gpu=gpu, xpu=xpu, cpu=cpu, disk=disk, mixed=TorchMixedDevice([gpu, xpu, cpu, disk]))
 
     def close_copy_threads(self):
         self.disk.close_copy_threads()
@@ -70,13 +74,13 @@ np_dtype_to_torch_dtype = {
 }
 
 torch_dtype_to_np_dtype = {
-    torch.float16: np.float16, torch.float32: np.float32,
+    torch.float16: np.float16, torch.float32: np.float32, 
     torch.uint8: np.uint8, torch.int8: np.int8, torch.int32: np.int32,
     torch.int64: np.int64, torch.bool: bool,
 }
 
 torch_dtype_to_num_bytes = {
-    torch.float16: 2, torch.float32: 4,
+    torch.float16: 2, torch.float32: 4, torch.bfloat16: 2,
     torch.int8: 1, torch.uint8: 1, torch.int32: 4, torch.int64: 8,
     torch.bool: 1,
 }
@@ -145,7 +149,10 @@ def cpu_mem_stats():
 
 def torch_mem_stats():
     objects = gc.get_objects()
-    tensors = [obj for obj in objects if torch.is_tensor(obj) and obj.is_cuda]
+    if is_xpu_available():
+        tensors = [obj for obj in objects if torch.is_tensor(obj) and obj.is_xpu()]
+    else:
+        tensors = [obj for obj in objects if torch.is_tensor(obj) and obj.is_cuda]
 
     total_numel = 0
     total_mem = 0

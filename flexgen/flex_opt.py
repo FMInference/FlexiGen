@@ -24,6 +24,7 @@ from flexgen.utils import (Task, ExecutionEnv, GB, T, ValueHolder,
     array_1d, array_2d, array_3d, str2bool, project_decode_latency,
     torch_mem_stats, torch_dtype_to_np_dtype, write_benchmark_log,
     read_benchmark_log)
+from flexgen.xpu_utils import is_xpu_available
 
 fix_recursive_import()
 
@@ -34,6 +35,8 @@ DUMMY_WEIGHT = "_DUMMY_"  # Use dummy weights for benchmark purposes
 class Policy:
     gpu_batch_size: int
     num_gpu_batches: int
+    xpu_batch_size: int = None
+    num_xpu_batches: int = None
 
     # percent = a means a%
     w_gpu_percent: float
@@ -42,7 +45,10 @@ class Policy:
     cache_cpu_percent: float
     act_gpu_percent: float
     act_cpu_percent: float
-
+    w_xpu_percent: float = None 
+    cache_xpu_percent: float = None
+    act_xpu_percent: float = None 
+    
     # Whether to overlap the I/O and compute
     overlap: bool
 
@@ -68,14 +74,20 @@ class Policy:
 
     @property
     def w_disk_percent(self):
+        if is_xpu_available():
+            return 100 - self.w_xpu_percent -self.w_cpu_percent
         return 100 - self.w_gpu_percent - self.w_cpu_percent
 
     @property
     def cache_disk_percent(self):
+        if is_xpu_available():
+            return 100 - self.cache_xpu_percent - self.cache_cpu_percent
         return 100 - self.cache_gpu_percent - self.cache_cpu_percent
 
     @property
     def act_disk_percent(self):
+        if is_xpu_available():
+            return 100 - self.act_xpu_percent - self.act_cpu_percent
         return 100 - self.act_gpu_percent - self.act_cpu_percent
 
 
@@ -92,6 +104,9 @@ def get_choice(cur_percent, percents, choices):
 def init_weight_list(weight_specs, policy, env):
     dev_percents = [policy.w_disk_percent, policy.w_cpu_percent, policy.w_gpu_percent]
     dev_choices = [env.disk, env.cpu, env.gpu]
+    if  is_xpu_available():
+        dev_percents.append(policy.w_xpu_percent)
+        dev_choices.append(env.xpu)
 
     sizes = [np.prod(spec[0]) for spec in weight_specs]
     sizes_cumsum = np.cumsum(sizes)
@@ -136,7 +151,10 @@ class InputEmbed:
         self.config = config
         self.env = env
         self.policy = policy
-        self.compute = self.env.gpu
+        if is_xpu_available():
+            self.compute = self.env.xpu
+        else:
+            self.compute = self.env.gpu
         self.weight_load_dst = (self.compute.compressed_device if policy.compress_weight
             else self.compute)
 
@@ -183,8 +201,7 @@ class InputEmbed:
         donate = [False] * 4
         h, donate[0] = hidden.val, True
         mask, donate[1] = attention_mask.val.smart_copy(self.compute)
-
-        if k == self.policy.num_gpu_batches - 1:
+        if k == self.policy.num_gpu_batches - 1 or (k == self.policy.num_xpu_batches - 1 and is_xpu_available()):
             # Clear the weight_read_buf if it is the last gpu batch
             (w_token, donate[2]), (w_pos, donate[3]) = weight_read_buf.pop()
         else:
@@ -200,7 +217,10 @@ class OutputEmbed:
         self.config = config
         self.env = env
         self.policy = policy
-        self.compute = self.env.gpu
+        if is_xpu_available():
+            self.compute = self.env.xpu
+        else:
+            self.compute = self.env.gpu
         self.weight_load_dst = (self.compute.compressed_device if policy.compress_weight
             else self.compute)
 
@@ -249,8 +269,7 @@ class OutputEmbed:
                 cache_write_buf, i, k):
         donate = [False] * 4
         h, donate[0] = hidden.val, True
-
-        if k == self.policy.num_gpu_batches - 1:
+        if k == self.policy.num_gpu_batches - 1 or (k == self.policy.num_xpu_batches - 1 and is_xpu_available()):
             # Clear the weight_read_buf if it is the last gpu batch
             (w_ln, donate[1]), (b_ln, donate[2]), (w_token, donate[3]) = weight_read_buf.pop()
         else:
@@ -267,11 +286,18 @@ class SelfAttention:
         self.env = env
         self.layer_id = layer_id
         self.policy = policy
-        self.compute = self.env.gpu
+        if is_xpu_available():
+            self.compute = self.env.xpu
+        else:
+            self.compute = self.env.gpu
         self.weight_load_dst = (self.compute.compressed_device if policy.compress_weight
             else self.compute)
-        self.attention_compute = (self.env.cpu if self.policy.cpu_cache_compute
-            else self.env.gpu)
+        if is_xpu_available():
+            self.attention_compute = (self.env.cpu if self.policy.cpu_cache_compute
+                else self.env.xpu)
+        else:
+            self.attention_compute = (self.env.cpu if self.policy.cpu_cache_compute
+                else self.env.gpu)
 
         self.task = None
 
@@ -325,6 +351,8 @@ class SelfAttention:
             device = self.env.cpu
         elif self.policy.cache_disk_percent == 100:
             device = self.env.disk
+        elif self.policy.cache_xpu_percent == 100 and is_xpu_available():
+            device = self.env.xpu
         else:
             device = self.env.mixed
 
@@ -431,7 +459,7 @@ class SelfAttention:
         donate = [False] * 14
         h, donate[0] = hidden.val, True
 
-        if k == self.policy.num_gpu_batches - 1:
+        if k == self.policy.num_gpu_batches - 1 or (k == self.policy.num_xpu_batches - 1 and is_xpu_available()):
             # Clear the weight_read_buf if it is the last gpu batch
             ((w_q, donate[2]), (b_q, donate[3]), (w_k, donate[4]), (b_k, donate[5]),
              (w_v, donate[6]), (b_v, donate[7]), (w_out, donate[8]), (b_out, donate[9]),
@@ -465,7 +493,10 @@ class MLP:
         self.env = env
         self.layer_id = layer_id
         self.policy = policy
-        self.compute = self.env.gpu
+        if is_xpu_available():
+            self.compute = self.env.xpu
+        else:
+            self.compute = self.env.gpu
         self.weight_load_dst = (self.compute.compressed_device if policy.compress_weight
             else self.compute)
 
@@ -521,7 +552,7 @@ class MLP:
         donate = [False] * 7
         h, donate[0] = hidden.val, True
 
-        if k == self.policy.num_gpu_batches - 1:
+        if k == self.policy.num_gpu_batches - 1 or (k == self.policy.num_xpu_batches and is_xpu_available()):
             # Clear the weight_read_buf if it is the last gpu batch
             ((wi, donate[1]), (bi, donate[2]), (wo, donate[3]), (bo, donate[4]),
              (w_ln, donate[5]), (b_ln, donate[6])) = weight_read_buf.pop()
@@ -569,7 +600,7 @@ class TransformerLayer:
 
     def forward(self, hidden, cache_read_buf, weight_read_buf, attention_mask,
                 cache_write_buf, i, k):
-        if k == self.policy.num_gpu_batches - 1:
+        if k == self.policy.num_gpu_batches - 1 or (k == self.policy.num_xpu_batches and is_xpu_available()):
             read_buf1, read_buf2 = weight_read_buf.pop()
         else:
             read_buf1, read_buf2 = weight_read_buf.val
@@ -591,7 +622,10 @@ class OptLM:
         self.env = env
         self.path = path
         self.policy = policy
-        self.num_gpu_batches = policy.num_gpu_batches
+        if is_xpu_available():
+            self.num_xpu_batches = policy.num_xpu_batches
+        else:
+            self.num_gpu_batches = policy.num_gpu_batches
 
         layers = []
         layers.append(InputEmbed(self.config, self.env, self.policy))
@@ -611,18 +645,29 @@ class OptLM:
             self.act_home = self.env.cpu
         elif self.policy.act_disk_percent == 100:
             self.act_home = self.env.disk
+        elif self.policy.act_xpu_percent == 100:
+            self.act_home = self.env.xpu
         else:
             raise NotImplementedError()
 
-        # CUDA streams
-        self.load_weight_stream = torch.cuda.Stream()
-        self.load_cache_stream = torch.cuda.Stream()
-        self.store_cache_stream = torch.cuda.Stream()
+        if is_xpu_available():
+            self.load_weight_stream = torch.xpu.Stream()
+            self.load_cache_stream = torch.xpu.Stream()
+            self.store_cache_stream = torch.xpu.Stream()
+        else:    
+            # CUDA streams
+            self.load_weight_stream = torch.cuda.Stream()
+            self.load_cache_stream = torch.cuda.Stream()
+            self.store_cache_stream = torch.cuda.Stream()
+        
 
         # Intermediate tensors
         # The following buffers store values used
         # for the i-th token, j-th layer, k-th gpu batch.
-        num_layers, num_gpu_batches = self.num_layers, self.policy.num_gpu_batches
+        if is_xpu_available():
+            num_layers, num_gpu_batches = self.num_layers, self.policy.num_xpu_batches
+        else:
+            num_layers, num_gpu_batches = self.num_layers, self.policy.num_gpu_batches
 
         # cache[j][k]
         self.cache_home = array_2d(num_layers, num_gpu_batches, ValueHolder)
@@ -660,8 +705,12 @@ class OptLM:
 
         # Load from weight_home to weight_read_buf
         if overlap:
-            with torch.cuda.stream(self.load_weight_stream):
-                self.layers[j].load_weight(self.weight_home[j], self.weight_read_buf[j], k)
+            if is_xpu_available():
+                with torch.xpu.stream(self.load_weight_stream):
+                    self.layers[j].load_weight(self.weight_home[j], self.weight_read_buf[j], k)
+            else:
+                with torch.cuda.stream(self.load_weight_stream):
+                    self.layers[j].load_weight(self.weight_home[j], self.weight_read_buf[j], k)
         else:
             self.layers[j].load_weight(self.weight_home[j], self.weight_read_buf[j], k)
 
@@ -692,8 +741,12 @@ class OptLM:
 
         # Load from cache_home to cache_read_buf
         if overlap:
-            with torch.cuda.stream(self.load_cache_stream):
-                self.layers[j].load_cache(self.cache_home[j][k], self.cache_read_buf[j][k], i)
+            if is_xpu_available():
+                with torch.xpu.stream(self.load_cache_stream):
+                    self.layers[j].load_cache(self.cache_home[j][k], self.cache_read_buf[j][k], i)
+            else:
+                with torch.cuda.stream(self.load_cache_stream):
+                    self.layers[j].load_cache(self.cache_home[j][k], self.cache_read_buf[j][k], i)
         else:
             self.layers[j].load_cache(self.cache_home[j][k], self.cache_read_buf[j][k], i)
 
@@ -714,8 +767,12 @@ class OptLM:
         # Store cache_write_buf to cache_home
         # Delete cache_write_buf
         if overlap:
-            with torch.cuda.stream(self.store_cache_stream):
-                self.layers[j].store_cache(self.cache_home[j][k], self.cache_write_buf[j][k], i)
+            if is_xpu_available():
+                with torch.xpu.stream(self.store_cache_stream):
+                    self.layers[j].store_cache(self.cache_home[j][k], self.cache_write_buf[j][k], i)
+            else:
+                with torch.cuda.stream(self.store_cache_stream):
+                    self.layers[j].store_cache(self.cache_home[j][k], self.cache_write_buf[j][k], i)
         else:
             self.layers[j].store_cache(self.cache_home[j][k], self.cache_write_buf[j][k], i)
 
@@ -739,7 +796,10 @@ class OptLM:
         # Load to hidden states buffers
         dst = self.layers[j].compute
         if j == 0:
-            gpu_batch_size = self.policy.gpu_batch_size
+            if is_xpu_available():
+                gpu_batch_size = self.policy.xpu_batch_size
+            else:
+                gpu_batch_size = self.policy.gpu_batch_size 
             left, right = k * gpu_batch_size, (k + 1) * gpu_batch_size
             if i == 0:  # load from the input ids
                 val = dst.allocate((gpu_batch_size, self.task.prompt_len), np.int32)
@@ -765,7 +825,10 @@ class OptLM:
 
         # Store to hidden states buffers
         if j == self.num_layers - 1:  # store to output
-            gpu_batch_size = self.policy.gpu_batch_size
+            if is_xpu_available():
+                gpu_batch_size = self.policy.xpu_batch_size
+            else:
+                gpu_batch_size = self.policy.gpu_batch_size 
             left, right = k * gpu_batch_size, (k + 1) * gpu_batch_size
             ids = self.hidden[i][j][k].pop().data.detach().cpu().numpy()
             pos = self.task.prompt_len + i
@@ -792,7 +855,10 @@ class OptLM:
 
     def sync(self):
         self.env.disk.synchronize()
-        torch.cuda.synchronize()
+        if is_xpu_available():
+            torch.xpu.synchronize()
+        else:
+            torch.cuda.synchronize()
 
     def init_all_weights(self):
         self.weight_home = array_1d(self.num_layers, ValueHolder)
@@ -809,8 +875,11 @@ class OptLM:
             assert mask.val is not None
             mask.val = mask.val.device.extend_attention_mask(mask.val, [True])
             return
-
-        gpu_batch_size = self.policy.gpu_batch_size
+        
+        if is_xpu_available():
+            gpu_batch_size = self.policy.xpu_batch_size
+        else:
+            gpu_batch_size = self.policy.gpu_batch_size
         left = k * gpu_batch_size
         right = left + gpu_batch_size
         input_ids = self.output_ids[left:right, :self.task.prompt_len]
@@ -841,8 +910,12 @@ class OptLM:
             stop=stop,
         )
         num_layers = self.num_layers
-        num_gpu_batches = self.num_gpu_batches
-        gpu_batch_size = self.policy.gpu_batch_size
+        if is_xpu_available():
+            num_gpu_batches = self.num_xpu_batches
+            gpu_batch_size = self.policy.xpu_batch_size
+        else:
+            num_gpu_batches = self.num_gpu_batches
+            gpu_batch_size = self.policy.gpu_batch_size
         overlap = self.policy.overlap
         prompt_len, gen_len = task.prompt_len, task.gen_len
         self.execute_gen_len = task.cut_gen_len if task.cut_gen_len else task.gen_len
@@ -857,7 +930,10 @@ class OptLM:
         # Intermediate tensors
         # The following buffers store values used
         # for the i-th token, j-th layer, k-th gpu batch.
-        num_layers, num_gpu_batches = self.num_layers, self.policy.num_gpu_batches
+        if is_xpu_available():
+            num_layers, num_gpu_batches = self.num_layers, self.policy.num_xpu_batches
+        else:
+            num_layers, num_gpu_batches = self.num_layers, self.policy.num_gpu_batches
         for j in range(num_layers):
             for k in range(num_gpu_batches):
                 self.cache_home[j][k].clear()
@@ -1191,13 +1267,19 @@ def run_flexgen(args):
 
     gpu = TorchDevice("cuda:0")
     cpu = TorchDevice("cpu")
+    if args.ipex and is_xpu_available():
+        xpu = TorchDevice("xpu:0")
     disk = TorchDisk(args.offload_dir)
-    env = ExecutionEnv(gpu=gpu, cpu=cpu, disk=disk, mixed=TorchMixedDevice([gpu, cpu, disk]))
-
+    env = ExecutionEnv(gpu=gpu, xpu=xpu, cpu=cpu, disk=disk, mixed=TorchMixedDevice([gpu, xpu, cpu, disk]))
+    if args.ipex and is_xpu_available():
+        args.xpu_batch_size, args.num_xpu_batches = args.gpu_batch_size, args.num_xpu_batches
     policy = Policy(args.gpu_batch_size, args.num_gpu_batches,
+                    args.xpu_batch_size, args.num_xpu_batches,
                     args.percent[0], args.percent[1],
                     args.percent[2], args.percent[3],
                     args.percent[4], args.percent[5],
+                    args.percent[6], args.percent[7],
+                    args.percent[8],
                     args.overlap, args.sep_layer, args.pin_weight,
                     args.cpu_cache_compute, args.attn_sparsity,
                     args.compress_weight,
@@ -1244,6 +1326,8 @@ def run_flexgen(args):
     total_latency = prefill_latency + decode_latency
     total_throughput = num_generated_tokens / total_latency
     _, gpu_peak_mem = gpu.mem_stats()
+    if args.ipex and is_xpu_available():
+        _, xpu_peak_mem = xpu.mem_stats()
     _, cpu_peak_mem = cpu.mem_stats()
 
     if DUMMY_WEIGHT not in args.path:
@@ -1256,6 +1340,8 @@ def run_flexgen(args):
             print(show_str)
 
     gpu.print_stats()
+    if args.ipex and is_xpu_available():
+        xpu.print_stats()
     cpu.print_stats()
     projected = bool(args.debug_mode or cut_gen_len)
 
@@ -1263,10 +1349,10 @@ def run_flexgen(args):
         filename = get_filename(args) + ".log"
     else:
         filename = args.log_file
-
+    
     log_str = write_benchmark_log(filename,
         opt_config.model_bytes(), cache_size, hidden_size,
-        gpu_peak_mem, projected, prefill_latency, prefill_throughput,
+        xpu_peak_mem if (args.ipex and is_xpu_available()) else gpu_peak_mem, projected, prefill_latency, prefill_throughput,
         decode_latency, decode_throughput, total_latency, total_throughput)
     if args.verbose >= 1:
         print(log_str)
@@ -1289,14 +1375,17 @@ def add_parser_arguments(parser):
     parser.add_argument("--gpu-batch-size", type=int, default=4)
     parser.add_argument("--num-gpu-batches", type=int, default=1)
     parser.add_argument("--percent", nargs="+", type=int,
-        default=[100, 0, 100, 0, 100, 0],
-        help="Six numbers. They are "
+        default=[100, 0, 100, 0, 100, 0, 100, 100, 100],
+        help="Nine numbers. They are "
          "the percentage of weight on GPU, "
          "the percentage of weight on CPU, "
          "the percentage of attention cache on GPU, "
          "the percentage of attention cache on CPU, "
          "the percentage of activations on GPU, "
-         "the percentage of activations on CPU")
+         "the percentage of activations on CPU, "
+         "the percentage of weight on XPU, "
+         "the percentage of attention cache on XPU, "
+         "the percentage of activations on XPU, ")
     parser.add_argument("--sep-layer", type=str2bool, nargs='?',
         const=True, default=True)
     parser.add_argument("--pin-weight", type=str2bool, nargs="?",
@@ -1307,6 +1396,8 @@ def add_parser_arguments(parser):
         help="Whether to compress weight.")
     parser.add_argument("--compress-cache", action="store_true",
         help="Whether to compress cache.")
+    parser.add_argument("--ipex", action="store_true",
+        help="Whether to use xpu runtime on Intel GPU.")
 
 
     parser.add_argument("--log-file", type=str, default="auto")
@@ -1322,6 +1413,6 @@ if __name__ == "__main__":
     add_parser_arguments(parser)
     args = parser.parse_args()
 
-    assert len(args.percent) == 6
+    assert len(args.percent) == 9
 
     run_flexgen(args)
