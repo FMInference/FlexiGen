@@ -1,6 +1,12 @@
 """
 Usage:
 python3 profile_matmul.py
+
+Example output on H100:
+device: cuda, N: 1024, latency: 0.01 ms, TFLOPS: 177.774
+device: cuda, N: 2048, latency: 0.03 ms, TFLOPS: 557.721
+device: cuda, N: 4096, latency: 0.19 ms, TFLOPS: 742.862
+device: cuda, N: 8192, latency: 1.33 ms, TFLOPS: 824.212
 """
 
 import time
