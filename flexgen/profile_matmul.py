@@ -3,15 +3,32 @@ Usage:
 python3 profile_matmul.py
 """
 
+import time
+
 import numpy as np
 import torch
 
-from flexgen.profile_bandwidth import benchmark_func
+
+def benchmark_func(func, number, repeat, warmup=3):
+    for i in range(warmup):
+        func()
+
+    costs = []
+
+    for i in range(repeat):
+        torch.cuda.synchronize()
+        tic = time.time()
+        for i in range(number):
+            func()
+        torch.cuda.synchronize()
+        costs.append((time.time() - tic) / number)
+
+    return costs
 
 
 def bench_matmul():
-    for device in ["cuda", "cpu"]:
-        for n in [1024, 2048]:
+    for device in ["cuda"]:  # "cpu"
+        for n in [1024, 2048, 4096, 8192]:
             if device == "cuda":
                 dtype = torch.float16
             else:
