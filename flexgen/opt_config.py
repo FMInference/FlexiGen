@@ -51,7 +51,7 @@ class OptConfig:
 
 def get_opt_config(name, **kwargs):
     if "/" in name:
-        name = name.split("/")[1]
+        name = name.split("/")[-1]
     name = name.lower()
 
     # Handle opt-iml-30b and opt-iml-max-30b
@@ -216,21 +216,27 @@ def disable_hf_opt_init():
             "_init_weights", lambda *args, **kwargs: None)
 
 
-def download_opt_weights(model_name, path):
+def download_opt_weights(model_name, path, local = False, local_path = None):
     from huggingface_hub import snapshot_download
     import torch
 
-    print(f"Load the pre-trained pytorch weights of {model_name} from huggingface. "
-          f"The downloading and cpu loading can take dozens of minutes. "
-          f"If it seems to get stuck, you can monitor the progress by "
-          f"checking the memory usage of this process.")
+    if not local:
+        print(f"Load the pre-trained pytorch weights of {model_name} from huggingface. "
+            f"The downloading and cpu loading can take dozens of minutes. "
+            f"If it seems to get stuck, you can monitor the progress by "
+            f"checking the memory usage of this process.")
 
-    if "opt" in model_name:
-        hf_model_name = "facebook/" + model_name
-    elif "galactica" in model_name:
-        hf_model_name = "facebook/" + model_name
+        if "opt" in model_name:
+            hf_model_name = "facebook/" + model_name
+        elif "galactica" in model_name:
+            hf_model_name = "facebook/" + model_name
 
-    folder = snapshot_download(hf_model_name, allow_patterns="*.bin")
+        folder = snapshot_download(hf_model_name, allow_patterns="*.bin")
+    else:
+        print(f"Load the pre-trained pytorch weights of {model_name} from local path: "
+            f"{local_path}. The loading can take dozens of minutes.")
+        folder = local_path
+
     bin_files = glob.glob(os.path.join(folder, "*.bin"))
 
     if "/" in model_name:
